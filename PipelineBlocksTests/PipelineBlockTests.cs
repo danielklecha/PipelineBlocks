@@ -37,7 +37,7 @@ public class PipelineBlockTests
     {
         // arrange
         var block2 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c) };
-        var block1 = new PipelineBlock { Job = (x, c) => x.SkipAndGoForwardAsync(cancellationToken: c), ChildCondition = x => block2 };
+        var block1 = new PipelineBlock { Job = (x, c) => x.SkipAsync(cancellationToken: c), ChildCondition = x => block2 };
         // act
         await block1.ExecuteAsync();
         // assert
@@ -50,7 +50,7 @@ public class PipelineBlockTests
     {
         // arrange
         var block3 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c) };
-        var block2 = new PipelineBlock { Job = (x, c) => x.SkipAndGoForwardAsync(cancellationToken: c), ChildCondition = x => block3 };
+        var block2 = new PipelineBlock { Job = (x, c) => x.SkipAsync(cancellationToken: c), ChildCondition = x => block3 };
         var block1 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c), ChildCondition = x => block2 };
         // act
         await block1.ExecuteAsync();
@@ -64,7 +64,7 @@ public class PipelineBlockTests
     public async Task SkipAndGoForwardAsync_SkipLast_ShouldBeSkipped()
     {
         // arrange
-        var block2 = new PipelineBlock { Job = (x, c) => x.SkipAndGoForwardAsync(cancellationToken: c) };
+        var block2 = new PipelineBlock { Job = (x, c) => x.SkipAsync(cancellationToken: c) };
         var block1 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c), ChildCondition = x => block2 };
         // act
         await block1.ExecuteAsync();

@@ -25,8 +25,8 @@ PipelineBlock GetPipelineBlock()
                     await x.GoForwardAsync();
                     break;
                 case 2:
-                    Console.WriteLine( "SkipAndGoForwardAsync" );
-                    await x.SkipAndGoForwardAsync();
+                    Console.WriteLine( "SkipAsync" );
+                    await x.SkipAsync();
                     break;
             };
         },

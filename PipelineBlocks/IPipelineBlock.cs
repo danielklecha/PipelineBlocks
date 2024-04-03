@@ -5,7 +5,7 @@ public interface IPipelineBlock : IReadOnlyPipelineBlock, IPipelineModule
     /// <summary>
     /// Reset block data
     /// </summary>
-    void ResetData();
+    bool ResetData();
     /// <summary>
     /// Go back to exit with specific key
     /// </summary>
@@ -22,21 +22,20 @@ public interface IPipelineBlock : IReadOnlyPipelineBlock, IPipelineModule
     /// <returns>information about success</returns>
     Task<bool> GoForwardAsync( object? data = default, CancellationToken cancellationToken = default);
     /// <summary>
-    /// Go back to exit with specific key
+    /// Exit with data
     /// </summary>
     /// <returns>information about success</returns>
-    Task<bool> GoBackToExitAsync( object? data = default, CancellationToken cancellationToken = default);
+    Task<bool> ExitAsync( object? data = default, CancellationToken cancellationToken = default);
     /// <summary>
     /// Skip current block and go forward
     /// </summary>
     /// <returns>information about success</returns>
-    Task<bool> SkipAndGoForwardAsync(CancellationToken cancellationToken = default);
-    //new IPipelineBlock? Parent { get; set; }
-    void MarkAsCompleted();
+    Task<bool> SkipAsync(CancellationToken cancellationToken = default);
+    bool MarkAsCompleted();
 }
 
 public interface IPipelineBlock<T> : IPipelineBlock, IReadOnlyPipelineBlock<T>
 {
     Task<bool> GoForwardAsync(T? data = default, CancellationToken cancellationToken = default);
-    Task<bool> GoBackToExitAsync(T? data = default, CancellationToken cancellationToken = default);
+    Task<bool> ExitAsync(T? data = default, CancellationToken cancellationToken = default);
 }

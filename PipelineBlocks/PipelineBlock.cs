@@ -39,15 +39,20 @@ public class PipelineBlock : IPipelineBlock
 
     public virtual async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
+        if (_isCompleted)
+            return;
         if (Job != null)
             await Job.Invoke(this, cancellationToken);
         //if (!HasParent && !IsCompleted)
         //    throw new Exception( "Pipeline completed with invalid state" );
     }
 
-    public virtual void ResetData()
+    public virtual bool ResetData()
     {
+        if (_isCompleted)
+            return false;
         Data = default;
+        return true;
     }
 
     public IEnumerable<IPipelineBlock> Descendants
@@ -65,6 +70,8 @@ public class PipelineBlock : IPipelineBlock
 
     public virtual async Task<bool> GoForwardAsync(object? data = default, CancellationToken cancellationToken = default)
     {
+        if (_isCompleted)
+            return false;
         Data = data;
         var child = ChildCondition?.Invoke( this );
         if (child == null)
@@ -78,17 +85,19 @@ public class PipelineBlock : IPipelineBlock
         return true;
     }
 
-    public virtual Task<bool> GoBackToExitAsync(object? data = default, CancellationToken cancellationToken = default)
+    public virtual Task<bool> ExitAsync(object? data = default, CancellationToken cancellationToken = default)
     {
-        if (!HasExit)
+        if (_isCompleted || !HasExit)
             return Task.FromResult( false );
         Data = data;
         MarkAsCompleted();
         return Task.FromResult( true );
     }
 
-    public virtual async Task<bool> SkipAndGoForwardAsync(CancellationToken cancellationToken = default)
+    public virtual async Task<bool> SkipAsync(CancellationToken cancellationToken = default)
     {
+        if (_isCompleted)
+            return false;
         ResetData();
         var child = ChildCondition?.Invoke( this );
         if (child == null)
@@ -103,14 +112,19 @@ public class PipelineBlock : IPipelineBlock
 
     public string? Path => string.Join( "\\", Descendants.Reverse().Concat( Enumerable.Repeat( this, 1 ) ).Select( x => x.Name ).Where( x => !string.IsNullOrEmpty( x ) ) );
 
-    public void MarkAsCompleted()
+    public bool MarkAsCompleted()
     {
+        if (_isCompleted)
+            return false;
         Parent?.MarkAsCompleted();
         _isCompleted = true;
+        return true;
     }
 
     public virtual Task<bool> GoBackToExitAsync(string? key = default, CancellationToken cancellationToken = default)
     {
+        if (_isCompleted)
+            return Task.FromResult(false);
         var targetDescendant = Descendants.FirstOrDefault( x => x.HasExit && (x.Key?.Equals( key, StringComparison.OrdinalIgnoreCase ) ?? true) );
         if (targetDescendant == null)
             return Task.FromResult( false );
@@ -123,6 +137,8 @@ public class PipelineBlock : IPipelineBlock
 
     public virtual async Task<bool> GoBackToCheckpointAsync(string? key = default, CancellationToken cancellationToken = default)
     {
+        if (_isCompleted)
+            return false;
         var targetDescendant = Descendants.FirstOrDefault( x => x.IsCheckpoint && (x.Key?.Equals( key, StringComparison.OrdinalIgnoreCase ) ?? true) );
         if (targetDescendant == null)
             return false;
@@ -195,16 +211,19 @@ public class PipelineBlock<T> : PipelineBlock, IPipelineBlock<T>
     {
     }
 
-    public override void ResetData()
+    public override bool ResetData()
     {
+        if (IsCompleted)
+            return false;
         Data = default;
+        return true;
     }
 
     public override async Task<bool> GoForwardAsync(object? data = default, CancellationToken cancellationToken = default) => data is T && await base.GoForwardAsync( data,cancellationToken );
 
     public virtual Task<bool> GoForwardAsync(T? data = default, CancellationToken cancellationToken = default) => base.GoForwardAsync(data, cancellationToken);
 
-    public override async Task<bool> GoBackToExitAsync(object? data = default, CancellationToken cancellationToken = default) => data is T && await base.GoBackToExitAsync( data,cancellationToken );
+    public override async Task<bool> ExitAsync(object? data = default, CancellationToken cancellationToken = default) => data is T && await base.ExitAsync( data,cancellationToken );
 
-    public virtual Task<bool> GoBackToExitAsync(T? data = default, CancellationToken cancellationToken = default) => base.GoBackToExitAsync( data, cancellationToken);
+    public virtual Task<bool> ExitAsync(T? data = default, CancellationToken cancellationToken = default) => base.ExitAsync(data, cancellationToken);
 }
