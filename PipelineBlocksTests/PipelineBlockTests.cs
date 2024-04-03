@@ -2,17 +2,20 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System.Diagnostics.CodeAnalysis;
+using Castle.Components.DictionaryAdapter;
 
 namespace PipelineBlocks.Tests;
 
 [TestClass()]
+[ExcludeFromCodeCoverage]
 public class PipelineBlockTests
 {
     [TestMethod()]
     public async Task GoForwardAsync_OneBlock_ShouldBeCompleted()
     {
         // arrange
-        var block = new PipelineBlock { Job = (x,c) => x.GoForwardAsync(cancellationToken: c) };
+        var block = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c) };
         // act
         await block.ExecuteAsync();
         // assert
@@ -378,5 +381,115 @@ public class PipelineBlockTests
     public void GoBackToCheckpointAsyncTest3()
     {
         Assert.Fail();
+    }
+
+    [TestMethod()]
+    public async Task ExecuteAsync_AlreadyCompletedBlock_ShouldReturnFalse()
+    {
+        // arrange
+        PipelineBlock block = new();
+        // act
+        block.MarkAsCompleted();
+        var isSuccess = await block.ExecuteAsync();
+        // assert
+        isSuccess.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task ExecuteAsync_MissingJob_ShouldReturnFalse()
+    {
+        // arrange
+        PipelineBlock block = new();
+        // act
+        var isSuccess = await block.ExecuteAsync();
+        // assert
+        isSuccess.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task Data_Value_ShouldBeSet()
+    {
+        // arrange
+        string value = "myvalue";
+        PipelineBlock block = new()
+        {
+            Job = (x, c) => x.GoForwardAsync(value, c)
+        };
+        // act
+        await block.ExecuteAsync();
+        // assert
+        block.Data.Should().Be(value);
+    }
+
+    [TestMethod()]
+    public void PipelineBlockTest3()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void PipelineBlockTest4()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void ExecuteAsyncTest2()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void ResetDataTest2()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void GoForwardAsyncTest4()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void ExitAsyncTest()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void SkipAsyncTest()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void MarkAsCompletedTest2()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void GoBackToExitAsyncTest4()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void GoBackToCheckpointAsyncTest4()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod()]
+    public void ResetData_AlreadyCompleted_ShouldReturnFalse()
+    {
+        // arrange
+        PipelineBlock block = new();
+        block.MarkAsCompleted();
+        // act
+        Func<bool> act = block.ResetData;
+        // assert
+        act.Should().NotThrow().Which.Should().BeFalse();
     }
 }

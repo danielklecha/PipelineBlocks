@@ -37,14 +37,14 @@ public class PipelineBlock : IPipelineBlock
 
     public virtual bool HasExit => (ExitCondition?.Invoke( this ) ?? false) || ChildCondition?.Invoke( this ) == null;
 
-    public virtual async Task ExecuteAsync(CancellationToken cancellationToken = default)
+    public virtual async Task<bool> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        if (_isCompleted)
-            return;
-        if (Job != null)
-            await Job.Invoke(this, cancellationToken);
+        if (_isCompleted || Job == null)
+            return false;
+        await Job.Invoke(this, cancellationToken);
         //if (!HasParent && !IsCompleted)
         //    throw new Exception( "Pipeline completed with invalid state" );
+        return true;
     }
 
     public virtual bool ResetData()

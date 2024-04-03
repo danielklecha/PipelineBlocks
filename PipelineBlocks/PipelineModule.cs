@@ -4,7 +4,7 @@ public class PipelineModule(IPipelineModule startBlock, params IPipelineModule[]
 {
     public bool HasParent => startBlock.HasParent;
 
-    public Task ExecuteAsync(CancellationToken cancellationToken = default)
+    public Task<bool> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         return startBlock.ExecuteAsync(cancellationToken);
     }
