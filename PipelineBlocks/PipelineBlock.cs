@@ -2,6 +2,7 @@
 
 public class PipelineBlock : IPipelineBlock
 {
+    private bool _isCompleted = false;
     /// <summary>
     /// Name of current block
     /// </summary>
@@ -10,12 +11,12 @@ public class PipelineBlock : IPipelineBlock
     public virtual bool IsCheckpoint => !HasParent || (CheckpointCondition?.Invoke( this ) ?? false);
     public virtual Func<IReadOnlyPipelineBlock, string?>? KeyCondition { get; init; }
     public virtual Func<IReadOnlyPipelineBlock, string?>? NameCondition { get; init; }
-    public virtual Func<IReadOnlyPipelineBlock, bool?>? CheckpointCondition { get; internal set; }
+    public virtual Func<IReadOnlyPipelineBlock, bool?>? CheckpointCondition { get; init; }
     public virtual Func<IReadOnlyPipelineBlock, bool?>? ExitCondition { get; init; }
     public virtual object? Data { get; internal set; }
     public virtual IPipelineBlock? Parent { get; set; }
     IReadOnlyPipelineBlock? IReadOnlyPipelineModule.Parent => Parent;
-    public virtual Func<PipelineBlock, Task>? Job { get; init; }
+    public virtual Func<PipelineBlock, CancellationToken, Task>? Job { get; init; }
     public virtual bool HasParent => Parent != null;
     public virtual Func<IReadOnlyPipelineBlock, IPipelineModule?>? ChildCondition { get; set; }
 
@@ -23,12 +24,12 @@ public class PipelineBlock : IPipelineBlock
     {
     }
 
-    public PipelineBlock( object data, Func<IReadOnlyPipelineBlock, IPipelineModule?>? childCondition ) : this( x => { x.Data = data; return Task.CompletedTask; }, childCondition )
+    public PipelineBlock( object data, Func<IReadOnlyPipelineBlock, IPipelineModule?>? childCondition ) : this( (x, c) => { x.Data = data; return Task.CompletedTask; }, childCondition )
     {
 
     }
 
-    public PipelineBlock( Func<PipelineBlock, Task> func, Func<IReadOnlyPipelineBlock, IPipelineModule?>? childCondition )
+    public PipelineBlock( Func<PipelineBlock, CancellationToken, Task> func, Func<IReadOnlyPipelineBlock, IPipelineModule?>? childCondition )
     {
         Job = func;
         ChildCondition = childCondition;
@@ -36,10 +37,10 @@ public class PipelineBlock : IPipelineBlock
 
     public virtual bool HasExit => (ExitCondition?.Invoke( this ) ?? false) || ChildCondition?.Invoke( this ) == null;
 
-    public virtual async Task ExecuteAsync()
+    public virtual async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
         if (Job != null)
-            await Job.Invoke( this );
+            await Job.Invoke(this, cancellationToken);
         //if (!HasParent && !IsCompleted)
         //    throw new Exception( "Pipeline completed with invalid state" );
     }
@@ -62,13 +63,7 @@ public class PipelineBlock : IPipelineBlock
         }
     }
 
-    public virtual Task<bool> GoBackToExitAsync() => GoBackToExitAsync( null );
-
-    public virtual Task<bool> GoBackToCheckpointAsync() => GoBackToCheckpointAsync( null );
-
-    public virtual async Task<bool> GoForwardAsync() => await GoForwardAsync( default );
-
-    public virtual async Task<bool> GoForwardAsync( object? data )
+    public virtual async Task<bool> GoForwardAsync(object? data = default, CancellationToken cancellationToken = default)
     {
         Data = data;
         var child = ChildCondition?.Invoke( this );
@@ -79,13 +74,11 @@ public class PipelineBlock : IPipelineBlock
         }
         if (child != this && !Descendants.OfType<IPipelineModule>().Contains( child ))
             child.Parent = this;
-        await child.ExecuteAsync();
+        await child.ExecuteAsync(cancellationToken);
         return true;
     }
 
-    public virtual Task<bool> GoToExitAsync() => GoToExitAsync( default );
-
-    public virtual Task<bool> GoToExitAsync( object? data )
+    public virtual Task<bool> GoBackToExitAsync(object? data = default, CancellationToken cancellationToken = default)
     {
         if (!HasExit)
             return Task.FromResult( false );
@@ -94,7 +87,7 @@ public class PipelineBlock : IPipelineBlock
         return Task.FromResult( true );
     }
 
-    public virtual async Task<bool> SkipAndGoForwardAsync()
+    public virtual async Task<bool> SkipAndGoForwardAsync(CancellationToken cancellationToken = default)
     {
         ResetData();
         var child = ChildCondition?.Invoke( this );
@@ -104,7 +97,7 @@ public class PipelineBlock : IPipelineBlock
             return true;
         }
         child.Parent = Parent;
-        await child.ExecuteAsync();
+        await child.ExecuteAsync(cancellationToken);
         return true;
     }
 
@@ -112,12 +105,11 @@ public class PipelineBlock : IPipelineBlock
 
     public void MarkAsCompleted()
     {
-        IsCompleted = true;
-        foreach (var descendant in Descendants)
-            descendant.IsCompleted = true;
+        Parent?.MarkAsCompleted();
+        _isCompleted = true;
     }
 
-    public virtual Task<bool> GoBackToExitAsync( string? key )
+    public virtual Task<bool> GoBackToExitAsync(string? key = default, CancellationToken cancellationToken = default)
     {
         var targetDescendant = Descendants.FirstOrDefault( x => x.HasExit && (x.Key?.Equals( key, StringComparison.OrdinalIgnoreCase ) ?? true) );
         if (targetDescendant == null)
@@ -129,7 +121,7 @@ public class PipelineBlock : IPipelineBlock
         return Task.FromResult( true );
     }
 
-    public virtual async Task<bool> GoBackToCheckpointAsync( string? key )
+    public virtual async Task<bool> GoBackToCheckpointAsync(string? key = default, CancellationToken cancellationToken = default)
     {
         var targetDescendant = Descendants.FirstOrDefault( x => x.IsCheckpoint && (x.Key?.Equals( key, StringComparison.OrdinalIgnoreCase ) ?? true) );
         if (targetDescendant == null)
@@ -137,11 +129,11 @@ public class PipelineBlock : IPipelineBlock
         ResetData();
         foreach (var descendant in Descendants.TakeWhile( x => x != targetDescendant ))
             descendant.ResetData();
-        await targetDescendant.ExecuteAsync();
+        await targetDescendant.ExecuteAsync(cancellationToken);
         return true;
     }
 
-    public bool IsCompleted { get; set; }
+    public bool IsCompleted => _isCompleted;
 }
 
 public class PipelineBlock<T> : PipelineBlock, IPipelineBlock<T>
@@ -155,7 +147,7 @@ public class PipelineBlock<T> : PipelineBlock, IPipelineBlock<T>
     public new Func<IReadOnlyPipelineBlock<T>, bool?>? CheckpointCondition
     {
         get => x => base.CheckpointCondition?.Invoke( x );
-        internal set => base.CheckpointCondition = x => x is IReadOnlyPipelineBlock<T> t ? value?.Invoke( t ) : false;
+        init => base.CheckpointCondition = x => x is IReadOnlyPipelineBlock<T> t ? value?.Invoke( t ) : false;
     }
 
     public new Func<IReadOnlyPipelineBlock<T>, string?>? KeyCondition
@@ -176,10 +168,10 @@ public class PipelineBlock<T> : PipelineBlock, IPipelineBlock<T>
         set => base.Data = value;
     }
 
-    public new Func<PipelineBlock<T>, Task>? Job
+    public new Func<PipelineBlock<T>, CancellationToken, Task>? Job
     {
         get => base.Job;
-        init => base.Job = x => x is PipelineBlock<T> t && value != null ? value.Invoke( t ) : Task.CompletedTask;
+        init => base.Job = (x,c) => x is PipelineBlock<T> t && value != null ? value.Invoke( t, c ) : Task.CompletedTask;
     }
 
     public new Func<IReadOnlyPipelineBlock<T>, IPipelineModule?>? ChildCondition
@@ -193,13 +185,13 @@ public class PipelineBlock<T> : PipelineBlock, IPipelineBlock<T>
 
     }
 
-    public PipelineBlock( Func<PipelineBlock<T>, Task> func )
+    public PipelineBlock( Func<PipelineBlock<T>, CancellationToken, Task> func )
     {
         ResetData();
         Job = func;
     }
 
-    public PipelineBlock( T data ) : this( x => { x.Data = data; return Task.CompletedTask; } )
+    public PipelineBlock( T data ) : this( (x,c) => { x.Data = data; return Task.CompletedTask; } )
     {
     }
 
@@ -208,15 +200,11 @@ public class PipelineBlock<T> : PipelineBlock, IPipelineBlock<T>
         Data = default;
     }
 
-    public override Task<bool> GoForwardAsync() => GoForwardAsync( default );
+    public override async Task<bool> GoForwardAsync(object? data = default, CancellationToken cancellationToken = default) => data is T && await base.GoForwardAsync( data,cancellationToken );
 
-    public override async Task<bool> GoForwardAsync( object? data ) => data is T && await base.GoForwardAsync( data );
+    public virtual Task<bool> GoForwardAsync(T? data = default, CancellationToken cancellationToken = default) => base.GoForwardAsync(data, cancellationToken);
 
-    public virtual Task<bool> GoForwardAsync( T? data ) => base.GoForwardAsync( data );
+    public override async Task<bool> GoBackToExitAsync(object? data = default, CancellationToken cancellationToken = default) => data is T && await base.GoBackToExitAsync( data,cancellationToken );
 
-    public override Task<bool> GoToExitAsync() => GoToExitAsync( default );
-
-    public override async Task<bool> GoToExitAsync( object? data ) => data is T && await base.GoToExitAsync( data );
-
-    public virtual Task<bool> GoToExitAsync( T? data ) => base.GoToExitAsync( data );
+    public virtual Task<bool> GoBackToExitAsync(T? data = default, CancellationToken cancellationToken = default) => base.GoBackToExitAsync( data, cancellationToken);
 }

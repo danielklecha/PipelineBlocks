@@ -1,46 +1,37 @@
 ﻿namespace PipelineBlocks;
 
-public class PipelineModule : IPipelineModule
+public class PipelineModule(IPipelineModule startBlock, params IPipelineModule[] endBlocks) : IPipelineModule
 {
-    private readonly IPipelineModule _startBlock;
-    private readonly IPipelineModule[] _endBlocks;
+    public bool HasParent => startBlock.HasParent;
 
-    public bool HasParent => _startBlock.HasParent;
-
-    public Task ExecuteAsync()
+    public Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        return _startBlock.ExecuteAsync();
-    }
-
-    public PipelineModule( IPipelineModule startBlock, params IPipelineModule[] endBlocks )
-    {
-        _startBlock = startBlock;
-        _endBlocks = endBlocks;
+        return startBlock.ExecuteAsync(cancellationToken);
     }
 
     public Func<IReadOnlyPipelineBlock, IPipelineModule?>? ChildCondition
     {
-        get => _endBlocks[ 0 ].ChildCondition;
-        set => _endBlocks[ 0 ].ChildCondition = value;
+        get => endBlocks[ 0 ].ChildCondition;
+        set => endBlocks[ 0 ].ChildCondition = value;
     }
 
-    public IEnumerable<IPipelineBlock> Descendants => _startBlock.Descendants;
+    public IEnumerable<IPipelineBlock> Descendants => startBlock.Descendants;
 
     public IPipelineBlock? Parent
     {
-        get => _startBlock.Parent;
-        set => _startBlock.Parent = value;
+        get => startBlock.Parent;
+        set => startBlock.Parent = value;
     }
 
-    public bool IsCompleted => _startBlock.IsCompleted;
+    public bool IsCompleted => startBlock.IsCompleted;
 
     IReadOnlyPipelineBlock? IReadOnlyPipelineModule.Parent => Parent;
 
     public bool SetChildCondition( int index, Func<IReadOnlyPipelineBlock, PipelineBlock?>? condition )
     {
-        if (index < 0 || index >= _endBlocks.Length)
+        if (index < 0 || index >= endBlocks.Length)
             return false;
-        _endBlocks[ index ].ChildCondition = condition;
+        endBlocks[ index ].ChildCondition = condition;
         return true;
     }
 

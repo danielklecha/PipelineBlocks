@@ -7,7 +7,7 @@ PipelineBlock GetPipelineBlock()
 {
     return new PipelineBlock()
     {
-        Job = async x =>
+        Job = async (x,c) =>
         {
             Console.WriteLine( x.Path );
             switch (Convert.ToInt32( Console.ReadLine() ))
