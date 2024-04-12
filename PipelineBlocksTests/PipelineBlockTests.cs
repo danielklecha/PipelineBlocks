@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System.Diagnostics.CodeAnalysis;
-using Castle.Components.DictionaryAdapter;
+using FluentAssertions.Execution;
 
 namespace PipelineBlocks.Tests;
 
@@ -12,117 +12,99 @@ namespace PipelineBlocks.Tests;
 public class PipelineBlockTests
 {
     [TestMethod()]
-    public async Task GoForwardAsync_OneBlock_ShouldBeCompleted()
+    public void HasExit_HasExitCondition_ShouldBeTrue()
     {
         // arrange
-        var block = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c) };
-        // act
-        await block.ExecuteAsync();
-        // assert
-        block.IsCompleted.Should().BeTrue();
+        PipelineBlock<object> block = new()
+        {
+            ExitCondition = x => true
+        };
+        // act & assert
+        block.HasExit.Should().BeTrue();
     }
 
     [TestMethod()]
-    public async Task GoForwardAsync_TwoBlocks_ShouldBeCompleted()
+    public void HasExit_HasChild_ShouldBeFalse()
     {
         // arrange
-        var block2 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c) };
-        var block1 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c), ChildCondition = x => block2 };
-        // act
-        await block1.ExecuteAsync();
-        // assert
-        block1.IsCompleted.Should().BeTrue();
-        block2.IsCompleted.Should().BeTrue();
-    }
-
-    [TestMethod]
-    public async Task SkipAndGoForwardAsync_SkipFirst_ShouldBeSkipped()
-    {
-        // arrange
-        var block2 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c) };
-        var block1 = new PipelineBlock { Job = (x, c) => x.SkipAsync(cancellationToken: c), ChildCondition = x => block2 };
-        // act
-        await block1.ExecuteAsync();
-        // assert
-        block1.IsCompleted.Should().BeFalse();
-        block2.IsCompleted.Should().BeTrue();
-    }
-
-    [TestMethod]
-    public async Task SkipAndGoForwardAsync_SkipMiddle_ShouldBeSkipped()
-    {
-        // arrange
-        var block3 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c) };
-        var block2 = new PipelineBlock { Job = (x, c) => x.SkipAsync(cancellationToken: c), ChildCondition = x => block3 };
-        var block1 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c), ChildCondition = x => block2 };
-        // act
-        await block1.ExecuteAsync();
-        // assert
-        block1.IsCompleted.Should().BeTrue();
-        block2.IsCompleted.Should().BeFalse();
-        block3.IsCompleted.Should().BeTrue();
-    }
-
-    [TestMethod]
-    public async Task SkipAndGoForwardAsync_SkipLast_ShouldBeSkipped()
-    {
-        // arrange
-        var block2 = new PipelineBlock { Job = (x, c) => x.SkipAsync(cancellationToken: c) };
-        var block1 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c), ChildCondition = x => block2 };
-        // act
-        await block1.ExecuteAsync();
-        // assert
-        block1.IsCompleted.Should().BeTrue();
-        block2.IsCompleted.Should().BeFalse();
-    }
-
-    [TestMethod]
-    public async Task GoBackToCheckpointAsync_BackFromSecondToFirst_ShouldBeDone()
-    {
-        // arrange
-        var block1 = new Mock<IPipelineBlock>();
-        block1.Setup(x => x.IsCheckpoint).Returns(true);
-        var block2 = new PipelineBlock { Job = (x, c) => x.GoBackToCheckpointAsync(cancellationToken: c), Parent = block1.Object };
-        // act
-        await block2.ExecuteAsync();
-        // assert
-        block1.Verify(x => x.ExecuteAsync(CancellationToken.None), Times.Once());
-    }
-
-    [TestMethod]
-    public async Task GoBackToCheckpointAsync_BackFromThirdToFirst_ShouldBeDone()
-    {
-        // arrange
-        var block1 = new Mock<IPipelineBlock>();
-        block1.Setup(x => x.IsCheckpoint).Returns(true);
-        var block3 = new PipelineBlock { Job = (x, c) => x.GoBackToCheckpointAsync(cancellationToken: c) };
-        var block2 = new PipelineBlock { Job = (x, c) => x.GoForwardAsync(cancellationToken: c), Parent = block1.Object, ChildCondition = x => block3 };
-        // act
-        await block2.ExecuteAsync();
-        // assert
-        block1.Verify(x => x.ExecuteAsync(CancellationToken.None), Times.Once());
+        PipelineBlock<object> block = new();
+        block.SetChild(new PipelineBlock<object>());
+        // act & assert
+        block.HasExit.Should().BeFalse();
     }
 
     [TestMethod()]
-    public void IsCheckpoint_NoParent_ShouldBeTrue()
+    public void HasExit_NoExitConditionNoChild_ShouldBeTrue()
     {
         // arrange
-        PipelineBlock block = new();
+        PipelineBlock<object> block = new();
+        // act & assert
+        block.HasExit.Should().BeTrue();
+    }
+
+    [TestMethod()]
+    public void Name_HasNameCondition_ShouldBeSet()
+    {
+        // arrange
+        var name = "myblock";
+        PipelineBlock<object> block = new()
+        {
+            NameCondition = x => name
+        };
+        // act & assert
+        block.Name.Should().Be(name);
+    }
+
+    [TestMethod()]
+    public void Name_NoNameCondition_ShouldBeNull()
+    {
+        // arrange
+        PipelineBlock<object> block = new();
+        // act & assert
+        block.Name.Should().BeNull();
+    }
+
+    [TestMethod()]
+    public void Key_HasKeyCondition_ShouldBeSet()
+    {
+        // arrange
+        var key = "myblock";
+        PipelineBlock<object> block = new()
+        {
+            KeyCondition = x => key
+        };
+        // act & assert
+        block.Key.Should().Be(key);
+    }
+
+    [TestMethod()]
+    public void Key_NoKeyCondition_ShouldBeNull()
+    {
+        // arrange
+        PipelineBlock<object> block = new();
+        // act & assert
+        block.Key.Should().BeNull();
+    }
+    [TestMethod()]
+    public void IsCheckpoint_NoParentNoCheckpointCondition_ShouldBeTrue()
+    {
+        // arrange
+        PipelineBlock<object> block = new();
         // act & assert
         block.IsCheckpoint.Should().BeTrue();
     }
 
     [TestMethod()]
-    public async Task IsCheckpoint_HasParentAndCheckpointCondition_ShouldBeTrue()
+    public async Task IsCheckpoint_HasParentHasCheckpointCondition_ShouldBeTrue()
     {
         // arrange
-        PipelineBlock block2 = new()
+        PipelineBlock<object> block2 = new()
         {
             CheckpointCondition = x => true
         };
-        PipelineBlock block1 = new()
+        PipelineBlock<object> block1 = new()
         {
-            Job = (x, c) => x.GoForwardAsync(cancellationToken: c),
+            Job = (x, c) => x.ForwardAsync(cancellationToken: c),
             ChildCondition = x => block2
         };
         // act
@@ -132,14 +114,16 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task IsCheckpoint_HasParentButDoesntHaveCheckpointCondition_ShouldBeFalse()
+    public async Task IsCheckpoint_HasParentNoCheckpointCondition_ShouldBeFalse()
     {
         // arrange
-        PipelineBlock block2 = new();
-        PipelineBlock block1 = new()
+        PipelineBlock<object> block2 = new()
         {
-            Job = (x, c) => x.GoForwardAsync(cancellationToken: c),
-            CheckpointCondition = x => true,
+            Job = (x, c) => x.BackToExitAsync(cancellationToken: c)
+        };
+        PipelineBlock<object> block1 = new()
+        {
+            Job = (x, c) => x.ForwardAsync(cancellationToken: c),
             ChildCondition = x => block2
         };
         // act
@@ -149,346 +133,540 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public void ExecuteAsyncTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void ResetDataTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToExitAsyncTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToCheckpointAsyncTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoForwardAsyncTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoForwardAsyncTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoToExitAsyncTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoToExitAsyncTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void SkipAndGoForwardAsyncTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void MarkAsCompletedTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToExitAsyncTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToCheckpointAsyncTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void Name_HasNameCondition_ShouldBeSet()
+    public async Task ExecuteAsync_IsCompleted_ShouldReturnFalse()
     {
         // arrange
-        var name = "myblock";
-        PipelineBlock block = new()
+        PipelineBlock<object> block = new()
         {
-            NameCondition = x => name
+            Job = (x, c) => x.ForwardAsync(cancellationToken: c)
         };
-        // act & assert
-        block.Name.Should().Be(name);
-    }
-
-    [TestMethod()]
-    public void Name_DoesntHaveNameCondition_ShouldBeNull()
-    {
-        // arrange
-        PipelineBlock block = new();
-        // act & assert
-        block.Name.Should().BeNull();
-    }
-
-    [TestMethod()]
-    public void Name_HasKeyCondition_ShouldBeSet()
-    {
-        // arrange
-        var key = "myblock";
-        PipelineBlock block = new()
+        // act
+        Func<Task<bool>> act = async () =>
         {
-            KeyCondition = x => key
+            await block.ExecuteAsync();
+            return await block.ExecuteAsync();
         };
-        // act & assert
-        block.Key.Should().Be(key);
+        // assert
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
     }
 
     [TestMethod()]
-    public void Name_DoesntHaveKeyCondition_ShouldBeNull()
+    public async Task ExecuteAsync_NoJob_ShouldReturnFalse()
     {
         // arrange
-        PipelineBlock block = new();
-        // act & assert
-        block.Key.Should().BeNull();
+        PipelineBlock<object> block = new();
+        // act
+        Func<Task<bool>> act = () => block.ExecuteAsync();
+        // assert
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
     }
 
     [TestMethod()]
-    public void HasExit_HasExitCondition_ShouldBeTrue()
+    public async Task ExecuteAsync_HasJob_ShouldReturnTrue()
     {
         // arrange
-        PipelineBlock block = new()
+        PipelineBlock<object> block = new()
         {
-            ExitCondition = x => true
+            Job = (x, c) => Task.CompletedTask
         };
-        // act & assert
-        block.HasExit.Should().BeTrue();
+        // act
+        Func<Task<bool>> act = () => block.ExecuteAsync();
+        // assert
+        (await act.Should().NotThrowAsync()).Which.Should().BeTrue();
     }
 
     [TestMethod()]
-    public void HasExit_DoesntHaveExitConditionAndHasChild_ShouldBeFalse()
+    public async Task Path_TwoBlocks_ShouldBeSet()
     {
         // arrange
-        PipelineBlock block2 = new();
-        PipelineBlock block1 = new()
+        PipelineBlock<object> block2 = new()
         {
+            NameCondition = x => "block2",
+            Job = (x, c) => x.BackToExitAsync(cancellationToken: c)
+        };
+        PipelineBlock<object> block1 = new()
+        {
+            NameCondition = x => "block1",
+            Job = (x, c) => x.ForwardAsync(cancellationToken: c),
             ChildCondition = x => block2
         };
-        // act & assert
-        block1.HasExit.Should().BeFalse();
-    }
-
-    [TestMethod()]
-    public void HasExit_DoesntHaveExitConditionAndDoesntHaveChild_ShouldBeFalse()
-    {
-        // arrange
-        PipelineBlock block1 = new();
-        // act & assert
-        block1.HasExit.Should().BeFalse();
-    }
-
-
-    [TestMethod()]
-    public void PipelineBlockTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void PipelineBlockTest2()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void ExecuteAsyncTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void ResetDataTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToExitAsyncTest2()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToCheckpointAsyncTest2()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoForwardAsyncTest2()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoForwardAsyncTest3()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoToExitAsyncTest2()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoToExitAsyncTest3()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void SkipAndGoForwardAsyncTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void MarkAsCompletedTest1()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToExitAsyncTest3()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToCheckpointAsyncTest3()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public async Task ExecuteAsync_AlreadyCompletedBlock_ShouldReturnFalse()
-    {
-        // arrange
-        PipelineBlock block = new();
         // act
-        block.MarkAsCompleted();
-        var isSuccess = await block.ExecuteAsync();
+        await block1.ExecuteAsync();
         // assert
-        isSuccess.Should().BeFalse();
+        block2.Path.Should().Be("block1\\block2");
     }
 
     [TestMethod()]
-    public async Task ExecuteAsync_MissingJob_ShouldReturnFalse()
+    public void IsCompleted_NotExecuted_ShouldReturnFalse()
     {
         // arrange
-        PipelineBlock block = new();
+        PipelineBlock<object> block = new();
+        // act & assert
+        block.IsCompleted.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task IsCompleted_AfterExecution_ShouldReturnTrue()
+    {
+        // arrange
+        PipelineBlock<object> block = new();
         // act
-        var isSuccess = await block.ExecuteAsync();
+        await block.ExecuteAsync();
         // assert
-        isSuccess.Should().BeFalse();
+        block.IsCompleted.Should().BeTrue();
     }
 
     [TestMethod()]
-    public async Task Data_Value_ShouldBeSet()
+    public async Task Data_AfterExecution_ShouldReturnTrue()
     {
         // arrange
-        string value = "myvalue";
-        PipelineBlock block = new()
+        var result = 123;
+        PipelineBlock<int> block = new()
         {
-            Job = (x, c) => x.GoForwardAsync(value, c)
+            Job = (x, c) => x.ForwardAsync(result, c)
         };
         // act
         await block.ExecuteAsync();
         // assert
-        block.Data.Should().Be(value);
+        using (new AssertionScope())
+        {
+            block.Data.Should().Be(result);
+            (block as IBlock).Data.Should().Be(result);
+        }  
     }
 
     [TestMethod()]
-    public void PipelineBlockTest3()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void PipelineBlockTest4()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void ExecuteAsyncTest2()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void ResetDataTest2()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoForwardAsyncTest4()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void ExitAsyncTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void SkipAsyncTest()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void MarkAsCompletedTest2()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToExitAsyncTest4()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void GoBackToCheckpointAsyncTest4()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod()]
-    public void ResetData_AlreadyCompleted_ShouldReturnFalse()
+    public async Task ForwardAsync_IsCompleted_ShouldBeCompleted()
     {
         // arrange
-        PipelineBlock block = new();
-        block.MarkAsCompleted();
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
         // act
-        Func<bool> act = block.ResetData;
+        Func<Task<bool>> act = async () =>
+        {
+            await block.ForwardAsync();
+            return await block.ForwardAsync();
+        };
+        // assert
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task ForwardAsync_OneBlock_ShouldBeCompleted()
+    {
+        // arrange
+        var result = 123;
+        var block = new PipelineBlock<object> {
+            Job = (x, c) => x.ForwardAsync(result, c)
+        };
+        // act
+        await block.ExecuteAsync();
+        // assert
+        using (new AssertionScope())
+        {
+            block.Data.Should().Be(result);
+            block.IsCompleted.Should().BeTrue();
+        }
+    }
+
+    [TestMethod()]
+    public async Task ForwardAsync_TwoBlocks_ShouldBeCompleted()
+    {
+        // arrange
+        var block2 = new PipelineBlock<object> {
+            Job = (x, c) => x.ForwardAsync(cancellationToken: c)
+        };
+        var block1 = new PipelineBlock<object> {
+            Job = (x, c) => x.ForwardAsync(cancellationToken: c),
+            ChildCondition = x => block2
+        };
+        // act
+        await block1.ExecuteAsync();
+        // assert
+        using (new AssertionScope())
+        {
+            block1.IsCompleted.Should().BeTrue();
+            block2.Parent.Should().Be(block1);
+            block2.IsCompleted.Should().BeTrue();
+        }
+    }
+
+    [TestMethod()]
+    public async Task ForwardAsync_ChildIsParent_ShouldBeFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>();
+        block.SetChild(block);
+        // act
+        Func<Task<bool>> act = () => (block as IActiveBlock<object>).ForwardAsync();
+        // assert
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task ForwardAsync_ChildIsCompleted_ShouldBeFalse()
+    {
+        // arrange
+        Mock<IChildBlock> block2 = new();
+        block2.Setup(x => x.IsCompleted).Returns(true);
+        var block1 = new PipelineBlock<object>();
+        block1.SetChild(block2.Object);
+        // act
+        Func<Task<bool>> act = () => (block1 as IActiveBlock<object>).ForwardAsync();
+        // assert
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task SetParent_IsCompleted_ShouldBeFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>();
+        // act
+        await block.ExecuteAsync();
+        Func<bool> act = () => (block as IChildBlock).SetParent(new PipelineBlock<object>());
+        // assert
+        act.Should().NotThrow().Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public void SetParent_ParentBlock_ShouldBeTrue()
+    {
+        // arrange
+        var block = new PipelineBlock<object>();
+        // act
+        Func<bool> act = () => (block as IChildBlock).SetParent(Mock.Of<IParentBlock>());
+        // assert
+        act.Should().NotThrow().Which.Should().BeTrue();
+    }
+
+    [TestMethod()]
+    public async Task ExitAsync_IsCompleted_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
+        // act
+        Func<Task<bool>> act = async () =>
+        {
+            await block.ForwardAsync(null);
+            return await block.ExitAsync(null);
+        };
+        // asset
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task ExitAsync_NoExit_ShouldReturnFalse()
+    {
+        // arrange
+        var block2 = new PipelineBlock<object>();
+        var block1 = new PipelineBlock<object>()
+        {
+            ChildCondition = _ => block2
+        };
+        // act
+        Func<Task<bool>> act = () => (block1 as IActiveBlock<object>).ExitAsync(null);
+        // asset
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task ExitAsync_HasExit_ShouldReturnSuccess()
+    {
+        // arrange
+        var result = 123;
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
+        // act
+        Func<Task<bool>> act = () => block.ExitAsync(result);
+        // asset
+        using (new AssertionScope())
+        {
+            (await act.Should().NotThrowAsync()).Which.Should().BeTrue();
+            block.Data.Should().Be(result);
+            block.IsCompleted.Should().BeTrue();
+        }   
+    }
+
+    [TestMethod()]
+    public async Task ResetData_IsExecuted_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>()
+        {
+            Job = (x, c) => x.ForwardAsync(123, c)
+        };
+        // act
+        await block.ExecuteAsync();
+        (block as IParentBlock<object>).ResetData();
+        // asset
+        using var _ = new AssertionScope();
+        block.IsCompleted.Should().BeFalse();
+        block.Data.Should().BeNull();
+    }
+
+    [TestMethod()]
+    public async Task BackToCheckpointAsync_IsCompleted_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
+        // act
+        Func<Task<bool>> act = async () =>
+        {
+            await block.ForwardAsync();
+            return await block.BackToCheckpointAsync();
+        };
+        // asset
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task BackToCheckpointAsync_OneBlock_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
+        // act
+        Func<Task<bool>> act = () => block.BackToCheckpointAsync();
+        // asset
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task BackToCheckpointAsync_NamedCheckpoint_ShouldReturnSuccess()
+    {
+        // arrange
+        var block1 = new Mock<IPipelineBlock<object>>();
+        var block2 = new Mock<IPipelineBlock<object>>();
+        var block3 = new PipelineBlock<object>();
+        block1.Setup(x => x.Key).Returns("block1");
+        block1.Setup(x => x.IsCompleted).Returns(true);
+        block1.Setup(x => x.Child).Returns(block2.Object);
+        block1.Setup(x => x.IsCheckpoint).Returns(true);
+        block2.Setup(x => x.Key).Returns("block2");
+        block2.Setup(x => x.IsCompleted).Returns(true);
+        block2.Setup(x => x.Parent).Returns(block1.Object);
+        block2.Setup(x => x.Child).Returns(block3);
+        (block3 as IChildBlock).SetParent(block2.Object);
+        // act
+        await (block3 as IActiveBlock).BackToCheckpointAsync("block1");
+        // asset
+        using var _ = new AssertionScope();
+        block2.Verify(x => x.ResetData(), Times.Once());
+        block1.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [TestMethod()]
+    public async Task BackToCheckpointAsync_UnnamedCheckpoint_ShouldReturnSuccess()
+    {
+        // arrange
+        var block1 = new Mock<IPipelineBlock<object>>();
+        var block2 = new Mock<IPipelineBlock<object>>();
+        var block3 = new PipelineBlock<object>();
+        block1.Setup(x => x.IsCompleted).Returns(true);
+        block1.Setup(x => x.Child).Returns(block2.Object);
+        block1.Setup(x => x.IsCheckpoint).Returns(true);
+        block2.Setup(x => x.IsCompleted).Returns(true);
+        block2.Setup(x => x.Parent).Returns(block1.Object);
+        block2.Setup(x => x.Child).Returns(block3);
+        (block3 as IChildBlock).SetParent(block2.Object);
+        // act
+        await (block3 as IActiveBlock).BackToCheckpointAsync();
+        // asset
+        using var _ = new AssertionScope();
+        block2.Verify(x => x.ResetData(), Times.Once());
+        block1.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [TestMethod()]
+    public async Task BackToExitAsync_IsCompleted_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
+        // act
+        Func<Task<bool>> act = async () =>
+        {
+            await block.ForwardAsync();
+            return await block.BackToExitAsync();
+        };
+        // asset
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task BackToExitAsync_OneBlock_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
+        // act
+        Func<Task<bool>> act = () => block.BackToExitAsync();
+        // asset
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task BackToExitAsync_NamedExit_ShouldReturnSuccess()
+    {
+        // arrange
+        var block1 = new Mock<IPipelineBlock<object>>();
+        var block2 = new Mock<IPipelineBlock<object>>();
+        var block3 = new PipelineBlock<object>();
+        block1.Setup(x => x.Key).Returns("block1");
+        block1.Setup(x => x.IsCompleted).Returns(true);
+        block1.Setup(x => x.Child).Returns(block2.Object);
+        block1.Setup(x => x.HasExit).Returns(true);
+        block2.Setup(x => x.Key).Returns("block2");
+        block2.Setup(x => x.IsCompleted).Returns(true);
+        block2.Setup(x => x.Parent).Returns(block1.Object);
+        block2.Setup(x => x.Child).Returns(block3);
+        (block3 as IChildBlock).SetParent(block2.Object);
+        // act
+        await (block3 as IActiveBlock).BackToExitAsync("block1");
+        // asset
+        using var _ = new AssertionScope();
+        block2.Verify(x => x.ResetData(), Times.Once());
+        block1.Verify(x => x.ResetData(), Times.Never);
+    }
+
+    [TestMethod()]
+    public async Task BackToExitAsync_UnnamedExit_ShouldReturnSuccess()
+    {
+        // arrange
+        var block1 = new Mock<IPipelineBlock<object>>();
+        var block2 = new Mock<IPipelineBlock<object>>();
+        var block3 = new PipelineBlock<object>();
+        block1.Setup(x => x.IsCompleted).Returns(true);
+        block1.Setup(x => x.Child).Returns(block2.Object);
+        block1.Setup(x => x.HasExit).Returns(true);
+        block2.Setup(x => x.IsCompleted).Returns(true);
+        block2.Setup(x => x.Parent).Returns(block1.Object);
+        block2.Setup(x => x.Child).Returns(block3);
+        (block3 as IChildBlock).SetParent(block2.Object);
+        // act
+        await (block3 as IActiveBlock).BackToExitAsync();
+        // asset
+        using var _ = new AssertionScope();
+        block2.Verify(x => x.ResetData(), Times.Once());
+        block1.Verify(x => x.ResetData(), Times.Never);
+    }
+
+    [TestMethod()]
+    public async Task SkipAsync_IsCompleted_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
+        // act
+        Func<Task<bool>> act = async () =>
+        {
+            await block.ForwardAsync();
+            return await block.SkipAsync();
+        };
+        // asset
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task SkipAsync_OneBlock_ShouldReturnTrue()
+    {
+        // arrange
+        var block = new PipelineBlock<object>() as IActiveBlock<object>;
+        // act
+        Func<Task<bool>> act = () => block.SkipAsync();
+        // asset
+        (await act.Should().NotThrowAsync()).Which.Should().BeTrue();
+    }
+
+    [TestMethod()]
+    public async Task SkipAsync_HasChild_ShouldReturnSuccess()
+    {
+        // arrange
+        var block2 = new Mock<IPipelineBlock<object>>();
+        var block1 = new PipelineBlock<object>();
+        block1.SetChild(block2.Object);
+        // act
+        await (block1 as IActiveBlock<object>).SkipAsync();
+        // asset
+        using var _ = new AssertionScope();
+        block1.IsCompleted.Should().BeFalse();
+        block2.Verify(x => x.SetParent(null), Times.Once());
+        block2.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [TestMethod()]
+    public void SetChild_BaseType_ShouldBeTrue()
+    {
+        // arrange
+        var block1 = new PipelineBlock<object>();
+        var block2 = Mock.Of<IChildBlock>();
+        // act
+        Func<bool> act = () => block1.SetChild(block2);
+        // assert
+        using var _ = new AssertionScope();
+        act.Should().NotThrow().Which.Should().BeTrue();
+        block1.Child.Should().Be(block2);
+    }
+
+    [TestMethod()]
+    public async Task SetChild_BaseTypeIsCompleted_ShouldBeFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>();
+        // act
+        await block.ExecuteAsync();
+        Func<bool> act = () => block.SetChild(Mock.Of<IChildBlock>());
+        // assert
+        act.Should().NotThrow().Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task SetChild_GenericFunc_ShouldBeSuccess()
+    {
+        // arrange
+        var block1 = new PipelineBlock<object>
+        {
+            Job = (x,c) => x.ForwardAsync(cancellationToken: c)
+        };
+        var block2 = new Mock<IChildBlock>();
+        // act
+        block1.SetChild(x => block2.Object);
+        await block1.ExecuteAsync();
+        // assert
+        block2.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [TestMethod()]
+    public async Task SetChild_GenericFuncIsCompleted_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>();
+        // act
+        await block.ExecuteAsync();
+        Func<bool> act = () => block.SetChild(x => Mock.Of<IChildBlock>());
+        // assert
+        act.Should().NotThrow().Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
+    public async Task SetChild_BaseFunc_ShouldBeSuccess()
+    {
+        // arrange
+        var block1 = new PipelineBlock<object>
+        {
+            Job = (x, c) => x.ForwardAsync(cancellationToken: c)
+        };
+        var block2 = new Mock<IChildBlock>();
+        // act
+        (block1 as IParentBlock).SetChild(x => block2.Object);
+        await block1.ExecuteAsync();
+        // assert
+        block2.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [TestMethod()]
+    public async Task SetChild_BaseFuncIsCompleted_ShouldReturnFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>();
+        // act
+        await block.ExecuteAsync();
+        Func<bool> act = () => (block as IParentBlock).SetChild(x => Mock.Of<IChildBlock>());
         // assert
         act.Should().NotThrow().Which.Should().BeFalse();
     }
