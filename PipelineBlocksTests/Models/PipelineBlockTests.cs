@@ -1,11 +1,11 @@
-﻿using PipelineBlocks;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System.Diagnostics.CodeAnalysis;
 using FluentAssertions.Execution;
+using PipelineBlocks.Models;
 
-namespace PipelineBlocks.Tests;
+namespace PipelineBlocksTests.Models;
 
 [TestClass()]
 [ExcludeFromCodeCoverage]
@@ -176,27 +176,6 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task Path_TwoBlocks_ShouldBeSet()
-    {
-        // arrange
-        PipelineBlock<object> block2 = new()
-        {
-            NameCondition = x => "block2",
-            Job = (x, c) => x.BackToExitAsync(cancellationToken: c)
-        };
-        PipelineBlock<object> block1 = new()
-        {
-            NameCondition = x => "block1",
-            Job = (x, c) => x.ForwardAsync(cancellationToken: c),
-            ChildCondition = x => block2
-        };
-        // act
-        await block1.ExecuteAsync();
-        // assert
-        block2.Path.Should().Be("block1\\block2");
-    }
-
-    [TestMethod()]
     public void IsCompleted_NotExecuted_ShouldReturnFalse()
     {
         // arrange
@@ -232,7 +211,7 @@ public class PipelineBlockTests
         {
             block.Data.Should().Be(result);
             (block as IBlock).Data.Should().Be(result);
-        }  
+        }
     }
 
     [TestMethod()]
@@ -255,7 +234,8 @@ public class PipelineBlockTests
     {
         // arrange
         var result = 123;
-        var block = new PipelineBlock<object> {
+        var block = new PipelineBlock<object>
+        {
             Job = (x, c) => x.ForwardAsync(result, c)
         };
         // act
@@ -272,10 +252,12 @@ public class PipelineBlockTests
     public async Task ForwardAsync_TwoBlocks_ShouldBeCompleted()
     {
         // arrange
-        var block2 = new PipelineBlock<object> {
+        var block2 = new PipelineBlock<object>
+        {
             Job = (x, c) => x.ForwardAsync(cancellationToken: c)
         };
-        var block1 = new PipelineBlock<object> {
+        var block1 = new PipelineBlock<object>
+        {
             Job = (x, c) => x.ForwardAsync(cancellationToken: c),
             ChildCondition = x => block2
         };
@@ -383,7 +365,7 @@ public class PipelineBlockTests
             (await act.Should().NotThrowAsync()).Which.Should().BeTrue();
             block.Data.Should().Be(result);
             block.IsCompleted.Should().BeTrue();
-        }   
+        }
     }
 
     [TestMethod()]
@@ -621,7 +603,7 @@ public class PipelineBlockTests
         // arrange
         var block1 = new PipelineBlock<object>
         {
-            Job = (x,c) => x.ForwardAsync(cancellationToken: c)
+            Job = (x, c) => x.ForwardAsync(cancellationToken: c)
         };
         var block2 = new Mock<IChildBlock>();
         // act

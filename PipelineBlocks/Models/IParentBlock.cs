@@ -1,4 +1,4 @@
-﻿namespace PipelineBlocks;
+﻿namespace PipelineBlocks.Models;
 
 public interface IParentBlock : IBlock, IExecutableBlock
 {

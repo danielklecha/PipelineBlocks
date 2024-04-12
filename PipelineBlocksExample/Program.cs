@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using PipelineBlocks;
+using PipelineBlocks.Extensions;
+using PipelineBlocks.Models;
 
 Console.WriteLine( "Hello, World!" );
 
@@ -9,7 +10,7 @@ PipelineBlock<object> GetPipelineBlock()
     {
         Job = async (x,c) =>
         {
-            Console.WriteLine( x.Path );
+            Console.WriteLine( x.GetPath() );
             switch (Convert.ToInt32( Console.ReadLine() ))
             {
                 case -1:

@@ -1,4 +1,6 @@
-﻿namespace PipelineBlocks;
+﻿using PipelineBlocks.Extensions;
+
+namespace PipelineBlocks.Models;
 
 public class PipelineBlock<T> : IPipelineBlock<T>
 {
@@ -14,18 +16,6 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     public Func<IBlock<T>, bool?>? ExitCondition { private get; init; }
     public T? Data => _data;
     public bool HasExit => (ExitCondition?.Invoke(this) ?? false) || Child is null;
-    private IEnumerable<IParentBlock> Descendants
-    {
-        get
-        {
-            var parent = _parent;
-            while (parent != null)
-            {
-                yield return parent;
-                parent = parent.Parent as IParentBlock;
-            }
-        }
-    }
 
     public string? Name => NameCondition?.Invoke(this);
 
@@ -45,7 +35,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         {
             _isCompleted = true;
             return false;
-        }   
+        }
         await Job.Invoke(this, cancellationToken);
         return true;
     }
@@ -61,19 +51,17 @@ public class PipelineBlock<T> : IPipelineBlock<T>
 
     public bool IsCompleted => _isCompleted;
 
-    public string? Path => string.Join("\\", Descendants.Reverse().Concat(Enumerable.Repeat(this, 1)).Select(x => x.Name).Where(x => !string.IsNullOrEmpty(x)));
-
     object? IBlock.Data => _data;
 
     async Task<bool> IActiveBlock.BackToCheckpointAsync(string? key, CancellationToken cancellationToken)
     {
         if (_isCompleted)
             return false;
-        var targetDescendant = Descendants.FirstOrDefault(x => x.IsCheckpoint && (x.Key?.Equals(key, StringComparison.OrdinalIgnoreCase) ?? true));
+        var targetDescendant = this.EnumerateDescendants().OfType<IParentBlock>().FirstOrDefault(x => x.IsCheckpoint && (key == null || string.Equals(key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetDescendant == null)
             return false;
         (this as IParentBlock).ResetData();
-        foreach (var descendant in Descendants.TakeWhile(x => x != targetDescendant))
+        foreach (var descendant in this.EnumerateDescendants().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
             descendant.ResetData();
         return await targetDescendant.ExecuteAsync(cancellationToken);
     }
@@ -82,11 +70,11 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     {
         if (_isCompleted)
             return Task.FromResult(false);
-        var targetDescendant = Descendants.FirstOrDefault(x => x.HasExit && (x.Key?.Equals(key, StringComparison.OrdinalIgnoreCase) ?? true));
+        var targetDescendant = this.EnumerateDescendants().OfType<IParentBlock>().FirstOrDefault(x => x.HasExit && (key == null || string.Equals(key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetDescendant == null)
             return Task.FromResult(false);
         (this as IParentBlock).ResetData();
-        foreach (var descendant in Descendants.TakeWhile(x => x != targetDescendant))
+        foreach (var descendant in this.EnumerateDescendants().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
             descendant.ResetData();
         return Task.FromResult(true);
     }
@@ -114,7 +102,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
 
     bool IChildBlock.SetParent(IParentBlock? parent)
     {
-        if(_isCompleted)
+        if (_isCompleted)
             return false;
         _parent = parent;
         return true;
@@ -134,7 +122,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
 
     bool IParentBlock.SetChild(Func<IBlock, IChildBlock?> setter)
     {
-        if(_isCompleted)
+        if (_isCompleted)
             return false;
         _childCondition = x => setter.Invoke(this);
         return true;

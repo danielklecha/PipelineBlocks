@@ -1,4 +1,4 @@
-﻿namespace PipelineBlocks;
+﻿namespace PipelineBlocks.Models;
 
 public interface IBlock<T> : IBlock
 {
@@ -27,8 +27,4 @@ public interface IBlock
     IBlock? Parent { get; }
     IBlock? Child { get; }
     bool IsCompleted { get; }
-    /// <summary>
-    /// Full path
-    /// </summary>
-    string? Path { get; }
 }
