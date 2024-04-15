@@ -264,12 +264,10 @@ public class PipelineBlockTests
         // act
         await block1.ExecuteAsync();
         // assert
-        using (new AssertionScope())
-        {
-            block1.IsCompleted.Should().BeTrue();
-            block2.Parent.Should().Be(block1);
-            block2.IsCompleted.Should().BeTrue();
-        }
+        using var _ = new AssertionScope();
+        block1.IsCompleted.Should().BeTrue();
+        block2.Parent.Should().Be(block1);
+        block2.IsCompleted.Should().BeTrue();
     }
 
     [TestMethod()]
