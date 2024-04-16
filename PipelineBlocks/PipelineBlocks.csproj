@@ -2,8 +2,27 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    <NullableReferenceTypes>true</NullableReferenceTypes>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PackageProjectUrl>https://github.com/danielklecha/PipelineBlocks</PackageProjectUrl>
+    <Authors>Daniel Klecha</Authors>
+    <Description>A .NET Standard library that can be used to create two-directional pipeline blocks.</Description>
+    <PackageTags>pipeline</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile></PackageLicenseFile>
+    <Copyright>Daniel Klecha</Copyright>
+    <RepositoryUrl>https://github.com/danielklecha/PipelineBlocks.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Product>PipelineBlocks</Product>
+    <PackageId>PipelineBlocks</PackageId>
+    <Version>1.0.0.0</Version>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
 </Project>
