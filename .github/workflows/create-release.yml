@@ -22,6 +22,6 @@ jobs:
     - name: Test
       run: dotnet test --configuration Release --no-build
     - name: Pack
-      run: dotnet pack SharpIpp/SharpIpp.csproj --configuration Release --no-build
+      run: dotnet pack PipelineBlocks/PipelineBlocks.csproj --configuration Release --no-build
     - name: Publish
       run: dotnet nuget push **/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGETAPIKEY }}
