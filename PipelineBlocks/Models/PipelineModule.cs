@@ -1,6 +1,6 @@
 ﻿namespace PipelineBlocks.Models;
 
-public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IChildBlock, IParentBlock
+public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IPipelineModule
 {
     public object? Data => startBlock.Data;
 
