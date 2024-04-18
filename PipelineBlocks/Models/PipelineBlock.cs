@@ -57,11 +57,11 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     {
         if (_isCompleted)
             return false;
-        var targetDescendant = this.EnumerateDescendants().OfType<IParentBlock>().FirstOrDefault(x => x.IsCheckpoint && (key == null || string.Equals(key, x.Key, StringComparison.OrdinalIgnoreCase)));
+        var targetDescendant = this.EnumerateAncestors().OfType<IParentBlock>().FirstOrDefault(x => x.IsCheckpoint && (key == null || string.Equals(key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetDescendant == null)
             return false;
         (this as IParentBlock).Reset();
-        foreach (var descendant in this.EnumerateDescendants().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
+        foreach (var descendant in this.EnumerateAncestors().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
             descendant.Reset();
         return await targetDescendant.ExecuteAsync(cancellationToken);
     }
@@ -70,11 +70,11 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     {
         if (_isCompleted)
             return Task.FromResult(false);
-        var targetDescendant = this.EnumerateDescendants().OfType<IParentBlock>().FirstOrDefault(x => x.HasExit && (key == null || string.Equals(key, x.Key, StringComparison.OrdinalIgnoreCase)));
-        if (targetDescendant == null)
+        var targetAncestor = this.EnumerateAncestors().OfType<IParentBlock>().FirstOrDefault(x => x.HasExit && (key == null || string.Equals(key, x.Key, StringComparison.OrdinalIgnoreCase)));
+        if (targetAncestor == null)
             return Task.FromResult(false);
         (this as IParentBlock).Reset();
-        foreach (var descendant in this.EnumerateDescendants().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
+        foreach (var descendant in this.EnumerateAncestors().OfType<IParentBlock>().TakeWhile(x => x != targetAncestor))
             descendant.Reset();
         return Task.FromResult(true);
     }
