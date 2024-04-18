@@ -23,9 +23,9 @@ public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IPi
         return startBlock.ExecuteAsync(cancellationToken);
     }
 
-    void IParentBlock.ResetData()
+    void IParentBlock.Reset()
     {
-        endBlock.ResetData();
+        endBlock.Reset();
     }
 
     bool IParentBlock.SetChild(Func<IBlock, IChildBlock?> setter)

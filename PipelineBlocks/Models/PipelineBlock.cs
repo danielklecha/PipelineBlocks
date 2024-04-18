@@ -60,9 +60,9 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         var targetDescendant = this.EnumerateDescendants().OfType<IParentBlock>().FirstOrDefault(x => x.IsCheckpoint && (key == null || string.Equals(key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetDescendant == null)
             return false;
-        (this as IParentBlock).ResetData();
+        (this as IParentBlock).Reset();
         foreach (var descendant in this.EnumerateDescendants().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
-            descendant.ResetData();
+            descendant.Reset();
         return await targetDescendant.ExecuteAsync(cancellationToken);
     }
 
@@ -73,9 +73,9 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         var targetDescendant = this.EnumerateDescendants().OfType<IParentBlock>().FirstOrDefault(x => x.HasExit && (key == null || string.Equals(key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetDescendant == null)
             return Task.FromResult(false);
-        (this as IParentBlock).ResetData();
+        (this as IParentBlock).Reset();
         foreach (var descendant in this.EnumerateDescendants().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
-            descendant.ResetData();
+            descendant.Reset();
         return Task.FromResult(true);
     }
 
@@ -94,7 +94,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         return await child.ExecuteAsync(cancellationToken);
     }
 
-    void IParentBlock.ResetData()
+    void IParentBlock.Reset()
     {
         _data = default;
         _isCompleted = false;
@@ -112,7 +112,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     {
         if (_isCompleted)
             return false;
-        (this as IParentBlock).ResetData();
+        (this as IParentBlock).Reset();
         var child = _childCondition?.Invoke(this);
         if (child == null)
             return true;

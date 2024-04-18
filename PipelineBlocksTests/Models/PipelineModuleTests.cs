@@ -127,9 +127,9 @@ public class PipelineModuleTests
         Mock<IParentBlock> endBlock = new();
         PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act
-        (module as IParentBlock).ResetData();
+        (module as IParentBlock).Reset();
         // assert
-        endBlock.Verify(x => x.ResetData(), Times.Once());
+        endBlock.Verify(x => x.Reset(), Times.Once());
     }
 
     [TestMethod()]

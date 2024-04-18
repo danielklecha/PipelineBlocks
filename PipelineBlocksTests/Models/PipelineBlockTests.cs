@@ -367,7 +367,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task ResetData_IsExecuted_ShouldReturnFalse()
+    public async Task Reset_IsExecuted_ShouldReturnFalse()
     {
         // arrange
         var block = new PipelineBlock<object>()
@@ -376,7 +376,7 @@ public class PipelineBlockTests
         };
         // act
         await block.ExecuteAsync();
-        (block as IParentBlock<object>).ResetData();
+        (block as IParentBlock<object>).Reset();
         // asset
         using var _ = new AssertionScope();
         block.IsCompleted.Should().BeFalse();
@@ -429,7 +429,7 @@ public class PipelineBlockTests
         await (block3 as IActiveBlock).BackToCheckpointAsync("block1");
         // asset
         using var _ = new AssertionScope();
-        block2.Verify(x => x.ResetData(), Times.Once());
+        block2.Verify(x => x.Reset(), Times.Once());
         block1.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
 
@@ -451,7 +451,7 @@ public class PipelineBlockTests
         await (block3 as IActiveBlock).BackToCheckpointAsync();
         // asset
         using var _ = new AssertionScope();
-        block2.Verify(x => x.ResetData(), Times.Once());
+        block2.Verify(x => x.Reset(), Times.Once());
         block1.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
 
@@ -501,8 +501,8 @@ public class PipelineBlockTests
         await (block3 as IActiveBlock).BackToExitAsync("block1");
         // asset
         using var _ = new AssertionScope();
-        block2.Verify(x => x.ResetData(), Times.Once());
-        block1.Verify(x => x.ResetData(), Times.Never);
+        block2.Verify(x => x.Reset(), Times.Once());
+        block1.Verify(x => x.Reset(), Times.Never);
     }
 
     [TestMethod()]
@@ -523,8 +523,8 @@ public class PipelineBlockTests
         await (block3 as IActiveBlock).BackToExitAsync();
         // asset
         using var _ = new AssertionScope();
-        block2.Verify(x => x.ResetData(), Times.Once());
-        block1.Verify(x => x.ResetData(), Times.Never);
+        block2.Verify(x => x.Reset(), Times.Once());
+        block1.Verify(x => x.Reset(), Times.Never);
     }
 
     [TestMethod()]
