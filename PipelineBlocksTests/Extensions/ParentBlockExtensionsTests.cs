@@ -1,4 +1,5 @@
-﻿using FluentAssertions.Execution;
+﻿using FluentAssertions;
+using FluentAssertions.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using PipelineBlocks.Models;
@@ -15,7 +16,9 @@ public class ParentBlockExtensionsTests
     {
         // arrange
         var block1 = new Mock<IPipelineBlock>();
+        block1.Setup(x => x.SetChild(It.IsAny<IPipelineBlock>())).Returns(true);
         var block2 = new Mock<IPipelineBlock>();
+        block2.Setup(x => x.SetChild(It.IsAny<IPipelineBlock>())).Returns(true);
         var block3 = new Mock<IPipelineBlock>();
         // act
         block1.Object.SetDescendants(block2.Object, block3.Object);
@@ -23,5 +26,18 @@ public class ParentBlockExtensionsTests
         using var _ = new AssertionScope();
         block1.Verify(x => x.SetChild(block2.Object), Times.Once());
         block2.Verify(x => x.SetChild(block3.Object), Times.Once());
+    }
+
+    [TestMethod()]
+    public void SetDescendants_CompletedDescendant_ShouldBeSuccess()
+    {
+        // arrange
+        var block1 = new Mock<IPipelineBlock>();
+        var block2 = new Mock<IPipelineBlock>();
+        block2.Setup(x => x.SetChild(It.IsAny<IPipelineBlock>())).Returns(false);
+        // act
+        Func<bool> act = () => block1.Object.SetDescendants(block2.Object);
+        // assert
+        act.Should().NotThrow().Which.Should().BeFalse();
     }
 }

@@ -4,13 +4,21 @@ namespace PipelineBlocks.Extensions;
 
 public static class ParentBlockExtensions
 {
-    public static void SetDescendants(this IParentBlock block, params IPipelineBlock[] ancestors)
+    /// <summary>
+    /// Set one-direction links from parent to child
+    /// </summary>
+    /// <param name="block"></param>
+    /// <param name="descendants"></param>
+    /// <returns></returns>
+    public static bool SetDescendants(this IParentBlock block, params IPipelineModule[] descendants)
     {
         var parent = block;
-        foreach (var ancestor in ancestors)
+        foreach (var descendant in descendants)
         {
-            parent.SetChild(ancestor);
-            parent = ancestor;
+            if (!parent.SetChild(descendant))
+                return false;
+            parent = descendant;
         }
+        return true;
     }
 }

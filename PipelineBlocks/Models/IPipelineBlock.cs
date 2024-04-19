@@ -1,6 +1,6 @@
 ﻿namespace PipelineBlocks.Models;
 
-public interface IPipelineBlock : IActiveBlock, IChildBlock, IParentBlock, IPipelineModule
+public interface IPipelineBlock : IActiveBlock, IPipelineModule
 {
 }
 
