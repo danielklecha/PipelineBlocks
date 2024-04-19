@@ -4,7 +4,7 @@ namespace PipelineBlocks.Extensions;
 
 public static class ParentBlockExtensions
 {
-    public static void SetAncestors(this IParentBlock block, params IPipelineBlock[] ancestors)
+    public static void SetDescendants(this IParentBlock block, params IPipelineBlock[] ancestors)
     {
         var parent = block;
         foreach (var ancestor in ancestors)
