@@ -591,6 +591,18 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
+    public async Task SkipAsync_ChildIsParent_ShouldBeFalse()
+    {
+        // arrange
+        var block = new PipelineBlock<object>();
+        block.SetChild(block);
+        // act
+        Func<Task<bool>> act = () => (block as IActiveBlock<object>).SkipAsync();
+        // assert
+        (await act.Should().NotThrowAsync()).Which.Should().BeFalse();
+    }
+
+    [TestMethod()]
     public void SetChild_BaseType_ShouldBeTrue()
     {
         // arrange

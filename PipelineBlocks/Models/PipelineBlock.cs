@@ -88,9 +88,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         var child = _childCondition?.Invoke(this);
         if (child == null)
             return true;
-        if (child == this)
-            return false;
-        if (!child.SetParent(this))
+        if (child == this || !child.SetParent(this))
             return false;
         return await child.ExecuteAsync(cancellationToken);
     }
@@ -117,7 +115,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         var child = _childCondition?.Invoke(this);
         if (child == null)
             return true;
-        if (!child.SetParent(_parent))
+        if (child == this || !child.SetParent(_parent))
             return false;
         return await child.ExecuteAsync(cancellationToken);
     }
