@@ -9,6 +9,9 @@ A .NET library that can be used to create two-directional pipeline blocks.
 ## Example
 
 ```csharp
+using PipelineBlocks.Extensions;
+using PipelineBlocks.Models;
+
 var block2 = new PipelineBlock<string>()
 {
     Job = (x, c) => x.ForwardAsync("success", c),
