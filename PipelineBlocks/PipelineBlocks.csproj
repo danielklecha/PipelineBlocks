@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <NullableReferenceTypes>true</NullableReferenceTypes>
@@ -19,7 +19,7 @@
     <RepositoryType>git</RepositoryType>
     <Product>PipelineBlocks</Product>
     <PackageId>PipelineBlocks</PackageId>
-    <Version>1.0.5.0</Version>
+    <Version>1.0.6.0</Version>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <ImplicitUsings>enable</ImplicitUsings>

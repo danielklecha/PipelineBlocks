@@ -19,6 +19,6 @@ public static class PipelineModuleExtensions
     {
         if(!block.SetDescendants(descendants))
             return false;
-        return descendants.Last().SetAncestors(descendants.SkipLast(1).Reverse().Concat(Enumerable.Repeat(block, 1)).ToArray());
+        return descendants.Last().SetAncestors(descendants.Reverse().Skip(1).Concat(Enumerable.Repeat(block, 1)).ToArray());
     }
 }

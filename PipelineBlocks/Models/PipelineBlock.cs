@@ -7,13 +7,12 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     private bool _isCompleted = false;
     private IParentBlock? _parent;
     private T? _data;
-    private Func<IBlock<T>, IChildBlock?>? _childCondition;
-    public Func<IBlock<T>, IChildBlock?>? ChildCondition { init => _childCondition = value; }
-    public Func<IActiveBlock<T>, CancellationToken, Task>? Job { private get; init; }
-    public Func<IBlock<T>, string?>? KeyCondition { private get; init; }
-    public Func<IBlock<T>, string?>? NameCondition { private get; init; }
-    public Func<IBlock<T>, bool?>? CheckpointCondition { private get; init; }
-    public Func<IBlock<T>, bool?>? ExitCondition { private get; init; }
+    public Func<IBlock<T>, IChildBlock?>? ChildCondition { private get; set; }
+    public Func<IActiveBlock<T>, CancellationToken, Task>? Job { private get; set; }
+    public Func<IBlock<T>, string?>? KeyCondition { private get; set; }
+    public Func<IBlock<T>, string?>? NameCondition { private get; set; }
+    public Func<IBlock<T>, bool?>? CheckpointCondition { private get; set; }
+    public Func<IBlock<T>, bool?>? ExitCondition { private get; set; }
     public T? Data => _data;
     public bool HasExit => (ExitCondition?.Invoke(this) ?? false) || Child is null;
 
@@ -25,7 +24,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
 
     public IBlock? Parent => _parent;
 
-    public IBlock? Child => _childCondition?.Invoke(this);
+    public IBlock? Child => ChildCondition?.Invoke(this);
 
     public async Task<bool> ExecuteAsync(CancellationToken cancellationToken = default)
     {
@@ -85,7 +84,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
             return false;
         _data = data;
         _isCompleted = true;
-        var child = _childCondition?.Invoke(this);
+        var child = ChildCondition?.Invoke(this);
         if (child == null)
             return true;
         if (child == this || !child.SetParent(this))
@@ -112,7 +111,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         if (_isCompleted)
             return false;
         (this as IParentBlock).Reset();
-        var child = _childCondition?.Invoke(this);
+        var child = ChildCondition?.Invoke(this);
         if (child == null)
             return true;
         if (child == this || !child.SetParent(_parent))
@@ -124,7 +123,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     {
         if (_isCompleted)
             return false;
-        _childCondition = x => setter.Invoke(this);
+        ChildCondition = x => setter.Invoke(this);
         return true;
     }
 
@@ -132,7 +131,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     {
         if (_isCompleted)
             return false;
-        _childCondition = x => block;
+        ChildCondition = x => block;
         return true;
     }
 
@@ -140,7 +139,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     {
         if (_isCompleted)
             return false;
-        _childCondition = x => setter.Invoke(this);
+        ChildCondition = x => setter.Invoke(this);
         return true;
     }
 }
