@@ -18,6 +18,8 @@ public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IPi
 
     public bool IsCompleted => startBlock.IsCompleted;
 
+    public string? StateMessage => startBlock.StateMessage;
+
     public Task<bool> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         return startBlock.ExecuteAsync(cancellationToken);

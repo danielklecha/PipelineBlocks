@@ -685,4 +685,36 @@ public class PipelineBlockTests
         // assert
         act.Should().NotThrow().Which.Should().BeFalse();
     }
+
+    [TestMethod()]
+    public async Task SetStateMessage_DuringExecution_ShouldBeSuccess()
+    {
+        // arrange
+        var stateMessage = "ok";
+        var block = new PipelineBlock<object>()
+        {
+            Job = (x, c) => { x.SetStateMessage(stateMessage); return x.ForwardAsync(cancellationToken: c); }
+        };
+        // act
+        await block.ExecuteAsync();
+        // assert
+        block.StateMessage.Should().Be(stateMessage);
+    }
+
+    [TestMethod()]
+    public async Task SetStateMessage_IsCompleted_ShouldBeFail()
+    {
+        // arrange
+        var block = new PipelineBlock<object>()
+        {
+            Job = async (x, c) => {
+                await x.ForwardAsync(cancellationToken: c);
+                x.SetStateMessage("error");
+            }
+        };
+        // act
+        await block.ExecuteAsync();
+        // assert
+        block.StateMessage.Should().BeNull();
+    }
 }

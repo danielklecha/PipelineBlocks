@@ -17,6 +17,12 @@ public interface IActiveBlock : IBlock
     /// </summary>
     /// <returns>information about success</returns>
     Task<bool> SkipAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// set state message
+    /// </summary>
+    /// <param name="message"></param>
+    /// <returns>information about success</returns>
+    bool SetStateMessage(string? message);
 }
 
 public interface IActiveBlock<T> : IActiveBlock, IBlock<T>
