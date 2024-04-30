@@ -52,4 +52,9 @@ public static class BlockExtensions
             .OfType<T1>()
             .FirstOrDefault();
     }
+
+    public static bool IsActive(this IBlock block)
+    {
+        return !block.IsCompleted && (block.Parent?.IsCompleted ?? true);
+    }
 }
