@@ -4,7 +4,7 @@
 [![NuGet downloads](https://img.shields.io/nuget/dt/PipelineBlocks.svg)](https://www.nuget.org/packages/PipelineBlocks)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/danielklecha/PipelineBlocks/blob/master/LICENSE.txt)
 
-A .NET library that can be used to create two-directional pipeline blocks.
+A .NET Standard library that can be used to create two-directional pipeline blocks.
 
 ## Example
 
@@ -33,7 +33,7 @@ var block1 = new PipelineBlock<int>()
 await block1.ExecuteAsync();
 ```
 
-## Avaliable actions in active block
+## Available actions in active block
 
 ```mermaid
 sequenceDiagram
@@ -48,7 +48,7 @@ Note left of CA: Continuue pipeline
 A ->> PA: BackToExitAsync
 Note right of PA: Finish pipeline
 A ->> PB: BackToCheckpointAsync
-Note right of PB: Finish pipeline
+Note right of PB: Continuue pipeline
 A ->> A: ExitAsync
 Note right of A: Finish pipeline
 ```
