@@ -1,24 +1,26 @@
-﻿namespace PipelineBlocks.Models;
+﻿using PipelineBlocks.Extensions;
+
+namespace PipelineBlocks.Models;
 
 public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IPipelineModule
 {
-    public object? Data => startBlock.Data;
+    public object? Data => endBlock.Data;
 
-    public string? Name => startBlock.Name;
+    public string? Name => endBlock.Name;
 
-    public string? Key => startBlock.Key;
+    public string? Key => endBlock.Key;
 
-    public bool IsCheckpoint => startBlock.IsCheckpoint;
+    public bool IsCheckpoint => Enumerable.Repeat(endBlock, 1).Concat(endBlock.EnumerateAncestors()).TakeWhile(x => x != startBlock.Parent).Any(x => x.IsCheckpoint);
 
-    public bool HasExit => startBlock.HasExit;
+    public bool HasExit => Enumerable.Repeat(endBlock, 1).Concat(endBlock.EnumerateAncestors()).TakeWhile(x => x != startBlock.Parent).Any(x => x.HasExit);
 
     public IBlock? Parent => startBlock.Parent;
 
     public IBlock? Child => endBlock.Child;
 
-    public bool IsCompleted => startBlock.IsCompleted;
+    public bool IsCompleted => endBlock.IsCompleted;
 
-    public string? StateMessage => startBlock.StateMessage;
+    public string? StateMessage => endBlock.StateMessage;
 
     public Task<bool> ExecuteAsync(CancellationToken cancellationToken = default)
     {
