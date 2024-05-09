@@ -15,6 +15,13 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
+    - name: Replace Version in csproj files
+      run: |
+        $tag = "${{ github.ref }}" -replace '^v', '' # Remove 'v' prefix from the tag
+        Get-ChildItem -Path . -Filter *.csproj -Recurse | ForEach-Object {
+          $csprojContent = Get-Content $_.FullName -Raw
+          $csprojContent -replace "<Version>.*?<\/Version>", "<Version>$tag<\/Version>" | Set-Content $_.FullName
+        }
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
