@@ -2,7 +2,7 @@
 
 namespace PipelineBlocks.Models;
 
-public class PipelineBlock<T> : IPipelineBlock<T>
+public class PipelineBlock<T> : IPipelineBlock<T>, IActiveBlock<T>
 {
     private IParentBlock? _parent;
     public Func<IBlock<T>, IChildBlock?>? ChildCondition { private get; set; }

@@ -28,13 +28,25 @@ public class PipelineModuleTests
     }
 
     [TestMethod()]
+    public void Data_GenericEndBlock_ShouldBeSet()
+    {
+        // arrange
+        var data = 123;
+        Mock<IParentBlock<object>> endBlock = new();
+        endBlock.Setup(x => x.Data).Returns(data);
+        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
+        // act && assert
+        module.Data.Should().Be(data);
+    }
+
+    [TestMethod()]
     public void Name_EndBlock_ShouldBeSet()
     {
         // arrange
         var name = "endBlock";
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.Name).Returns(name);
-        PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
+        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
         module.Name.Should().Be(name);
     }
@@ -44,9 +56,9 @@ public class PipelineModuleTests
     {
         // arrange
         var key = "endBlock";
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.Key).Returns(key);
-        PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
+        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
         module.Key.Should().Be(key);
     }
@@ -57,9 +69,9 @@ public class PipelineModuleTests
         // arrange
         Mock<IChildBlock> startBlock = new();
         startBlock.Setup(x => x.IsCheckpoint).Returns(true);
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
-        PipelineModule module = new(startBlock.Object, endBlock.Object);
+        PipelineModule<object> module = new(startBlock.Object, endBlock.Object);
         // act && assert
         module.IsCheckpoint.Should().BeTrue();
     }
@@ -69,10 +81,10 @@ public class PipelineModuleTests
     {
         // arrange
         Mock<IChildBlock> startBlock = new();
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
         endBlock.Setup(x => x.IsCheckpoint).Returns(true);
-        PipelineModule module = new(startBlock.Object, endBlock.Object);
+        PipelineModule<object> module = new(startBlock.Object, endBlock.Object);
         // act && assert
         module.IsCheckpoint.Should().BeTrue();
     }
@@ -83,9 +95,9 @@ public class PipelineModuleTests
         // arrange
         Mock<IChildBlock> startBlock = new();
         startBlock.Setup(x => x.HasExit).Returns(true);
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
-        PipelineModule module = new(startBlock.Object, endBlock.Object);
+        PipelineModule<object> module = new(startBlock.Object, endBlock.Object);
         // act && assert
         module.HasExit.Should().BeTrue();
     }
@@ -95,10 +107,10 @@ public class PipelineModuleTests
     {
         // arrange
         Mock<IChildBlock> startBlock = new();
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
         startBlock.Setup(x => x.HasExit).Returns(true);
-        PipelineModule module = new(startBlock.Object, endBlock.Object);
+        PipelineModule<object> module = new(startBlock.Object, endBlock.Object);
         // act && assert
         module.HasExit.Should().BeTrue();
     }
@@ -110,7 +122,7 @@ public class PipelineModuleTests
         IParentBlock parent = Mock.Of<IParentBlock>();
         Mock<IChildBlock> startBlock = new();
         startBlock.Setup(x => x.Parent).Returns(parent);
-        PipelineModule module = new(startBlock.Object, Mock.Of<IParentBlock>());
+        PipelineModule<object> module = new(startBlock.Object, Mock.Of<IParentBlock<object>>());
         // act && assert
         module.Parent.Should().Be(parent);
     }
@@ -119,9 +131,9 @@ public class PipelineModuleTests
     public void IsCompleted_EndBlock_ShouldBeSet()
     {
         // arrange
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.IsCompleted).Returns(true);
-        PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
+        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
         module.IsCompleted.Should().BeTrue();
     }
@@ -131,9 +143,9 @@ public class PipelineModuleTests
     {
         // arrange
         IChildBlock child = Mock.Of<IChildBlock>();
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.Child).Returns(child);
-        PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
+        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
         module.Child.Should().Be(child);
     }
@@ -143,7 +155,7 @@ public class PipelineModuleTests
     {
         // arrange
         Mock<IChildBlock> startBlock = new();
-        PipelineModule module = new(startBlock.Object, Mock.Of<IParentBlock>());
+        PipelineModule<object> module = new(startBlock.Object, Mock.Of<IParentBlock<object>>());
         // act
         await module.ExecuteAsync();
         // assert
@@ -154,8 +166,8 @@ public class PipelineModuleTests
     public void ResetData_EndBlock_ShouldBeSuccess()
     {
         // arrange
-        Mock<IParentBlock> endBlock = new();
-        PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
+        Mock<IParentBlock<object>> endBlock = new();
+        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act
         (module as IParentBlock).Reset();
         // assert
@@ -170,7 +182,7 @@ public class PipelineModuleTests
         Mock<IParentBlock> endBlock = new();
         PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act
-        (module as IParentBlock).SetChild(child);
+        module.SetChild(child);
         // assert
         endBlock.Verify(x => x.SetChild(child), Times.Once());
     }
@@ -183,7 +195,20 @@ public class PipelineModuleTests
         Mock<IParentBlock> endBlock = new();
         PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act
-        (module as IParentBlock).SetChild(func);
+        module.SetChild(func);
+        // assert
+        endBlock.Verify(x => x.SetChild(func), Times.Once());
+    }
+
+    [TestMethod()]
+    public void SetChild_GenericFunc_ShouldBeSuccess()
+    {
+        // arrange
+        Func<IBlock, IChildBlock?> func = x => null;
+        Mock<IParentBlock<object>> endBlock = new();
+        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
+        // act
+        module.SetChild(func);
         // assert
         endBlock.Verify(x => x.SetChild(func), Times.Once());
     }
@@ -194,7 +219,7 @@ public class PipelineModuleTests
         // arrange
         IParentBlock parent = Mock.Of<IParentBlock>();
         Mock<IChildBlock> startBlock = new();
-        PipelineModule module = new(startBlock.Object, Mock.Of<IParentBlock>());
+        PipelineModule<object> module = new(startBlock.Object, Mock.Of<IParentBlock<object>>());
         // act
         (module as IChildBlock).SetParent(parent);
         // assert
@@ -206,9 +231,9 @@ public class PipelineModuleTests
     {
         // arrange
         var stateMessage = "ok";
-        Mock<IParentBlock> endBlock = new();
+        Mock<IParentBlock<object>> endBlock = new();
         endBlock.Setup(x => x.StateMessage).Returns(stateMessage);
-        PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
+        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
         module.StateMessage.Should().Be(stateMessage);
     }

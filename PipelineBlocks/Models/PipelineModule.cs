@@ -32,12 +32,12 @@ public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IPi
         endBlock.Reset();
     }
 
-    bool IParentBlock.SetChild(Func<IBlock, IChildBlock?> setter)
+    public bool SetChild(Func<IBlock, IChildBlock?> setter)
     {
         return endBlock.SetChild(setter);
     }
 
-    bool IParentBlock.SetChild(IChildBlock? block)
+    public bool SetChild(IChildBlock? block)
     {
         return endBlock.SetChild(block);
     }
@@ -45,5 +45,15 @@ public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IPi
     bool IChildBlock.SetParent(IParentBlock? parent)
     {
         return startBlock.SetParent(parent);
+    }
+}
+
+public class PipelineModule<T>(IChildBlock startBlock, IParentBlock<T> endBlock) : PipelineModule(startBlock, endBlock), IPipelineModule<T>
+{
+    public new T? Data => endBlock.Data;
+
+    public bool SetChild(Func<IBlock<T>, IChildBlock?> setter)
+    {
+        return endBlock.SetChild(setter);
     }
 }

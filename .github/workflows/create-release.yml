@@ -17,7 +17,7 @@ jobs:
         dotnet-version: '8.0.x'
     - name: Replace Version in csproj files
       run: |
-        $tag = "${{ github.ref }}" -replace '^v', '' # Remove 'v' prefix from the tag
+        $tag = "${{ github.ref }}" -replace '^v', ''
         Get-ChildItem -Path . -Filter *.csproj -Recurse | ForEach-Object {
           $csprojContent = Get-Content $_.FullName -Raw
           $csprojContent -replace "<Version>.*?<\/Version>", "<Version>$tag<\/Version>" | Set-Content $_.FullName
