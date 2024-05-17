@@ -163,6 +163,18 @@ public class PipelineModuleTests
     }
 
     [TestMethod()]
+    public async Task ExecuteSelfAsync_StartBlock_ShouldBeSuccess()
+    {
+        // arrange
+        Mock<IChildBlock> startBlock = new();
+        PipelineModule<object> module = new(startBlock.Object, Mock.Of<IParentBlock<object>>());
+        // act
+        await (module as IExecutableBlock).ExecuteSelfAsync();
+        // assert
+        startBlock.Verify(x => x.ExecuteSelfAsync(It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [TestMethod()]
     public void ResetData_EndBlock_ShouldBeSuccess()
     {
         // arrange

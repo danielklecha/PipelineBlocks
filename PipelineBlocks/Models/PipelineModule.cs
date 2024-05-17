@@ -44,6 +44,11 @@ public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IPi
     {
         return startBlock.SetParent(parent);
     }
+
+    Task<BlockResult> IExecutableBlock.ExecuteSelfAsync(CancellationToken cancellationToken)
+    {
+        return startBlock.ExecuteSelfAsync(cancellationToken);
+    }
 }
 
 public class PipelineModule<T>(IChildBlock startBlock, IParentBlock<T> endBlock) : PipelineModule(startBlock, endBlock), IPipelineModule<T>

@@ -24,7 +24,7 @@ public class PipelineBlock<T> : IPipelineBlock<T>
 
     public IBlock? Child => ChildCondition?.Invoke(this);
 
-    public async Task<BlockResult> ExecuteAsync(CancellationToken cancellationToken = default)
+    async Task<BlockResult> IExecutableBlock.ExecuteSelfAsync(CancellationToken cancellationToken)
     {
         if (!this.IsActive())
             return BlockResult.Error("Block is not active");
@@ -34,31 +34,53 @@ public class PipelineBlock<T> : IPipelineBlock<T>
             return BlockResult.Error("No job");
         }
         var result = await Job.Invoke(this, cancellationToken);
+        if (result is null)
+            return BlockResult.Error("Job returned null");
         return result.ResultType switch
         {
-            BlockResultType.Exit => await ExitAsync(result, cancellationToken),
-            BlockResultType.Forward => await ForwardAsync(result, cancellationToken),
-            BlockResultType.BackToCheckpoint => await BackToCheckpointAsync(result, cancellationToken),
-            BlockResultType.BackToExit => await BackToExitAsync(result, cancellationToken),
-            BlockResultType.Skip => await SkipAsync(cancellationToken),
+            BlockResultType.Exit or BlockResultType.Completed => Exit(result),
+            BlockResultType.Forward => Forward(result),
+            BlockResultType.BackToCheckpoint => BackToCheckpoint(result),
+            BlockResultType.BackToExit => BackToExit(result),
+            BlockResultType.Skip => Skip(),
             _ => result
         };
     }
 
-    private Task<BlockResult> ExitAsync(BlockResult<T> result, CancellationToken cancellationToken)
+    public async Task<BlockResult> ExecuteAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await (this as IExecutableBlock).ExecuteSelfAsync(cancellationToken);
+        while (true)
+        {
+            if (result is null)
+                return BlockResult.Error("Block returned null");
+            switch (result.ResultType)
+            {
+                case BlockResultType.Execute when result.Data is IExecutableBlock block:
+                    if (block == this)
+                        return BlockResult.Error("Child is current block");
+                    result = await block.ExecuteSelfAsync();
+                    break;
+                default:
+                    return result;
+            }
+        }
+    }
+
+    private BlockResult Exit(BlockResult<T> result)
     {
         if (!HasExit)
-            return Task.FromResult(BlockResult.Error("No Exit"));
+            return BlockResult.Error("No Exit");
         Data = result.Data;
         IsCompleted = true;
-        return Task.FromResult(BlockResult.Completed());
+        return BlockResult.Completed("Exit result");
     }
 
     public bool IsCompleted { get; private set; }
 
     object? IBlock.Data => Data;
 
-    private async Task<BlockResult> BackToCheckpointAsync(BlockResult result, CancellationToken cancellationToken)
+    private BlockResult BackToCheckpoint(BlockResult result)
     {
         var targetDescendant = this.EnumerateAncestors().OfType<IParentBlock>().FirstOrDefault(x => x.IsCheckpoint && (result.Key == null || string.Equals(result.Key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetDescendant == null)
@@ -66,32 +88,32 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         (this as IParentBlock).Reset();
         foreach (var descendant in this.EnumerateAncestors().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
             descendant.Reset();
-        return await targetDescendant.ExecuteAsync(cancellationToken);
+        return BlockResult.Execute<IExecutableBlock>(targetDescendant);
     }
 
-    private Task<BlockResult> BackToExitAsync(BlockResult result, CancellationToken cancellationToken)
+    private BlockResult BackToExit(BlockResult result)
     {
         var targetAncestor = this.EnumerateAncestors().OfType<IParentBlock>().FirstOrDefault(x => x.HasExit && (result.Key == null || string.Equals(result.Key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetAncestor == null)
-            return Task.FromResult(BlockResult.Error("Unable to find exit"));
+            return BlockResult.Error("Unable to find exit");
         (this as IParentBlock).Reset();
         foreach (var descendant in this.EnumerateAncestors().OfType<IParentBlock>().TakeWhile(x => x != targetAncestor))
             descendant.Reset();
-        return Task.FromResult(BlockResult.Completed());
+        return BlockResult.Completed("Back to exit result");
     }
 
-    private async Task<BlockResult> ForwardAsync(BlockResult<T> result, CancellationToken cancellationToken)
+    private BlockResult Forward(BlockResult<T> result)
     {
         Data = result.Data;
         IsCompleted = true;
         var child = ChildCondition?.Invoke(this);
         if (child == null)
-            return BlockResult.Completed();
+            return BlockResult.Completed("Reached end of the pipeline");
         if (child == this)
             return BlockResult.Error("Child is current block");
         if (!child.SetParent(this))
             return BlockResult.Error("Unable to set child's parent");
-        return await child.ExecuteAsync(cancellationToken);
+        return BlockResult.Execute<IExecutableBlock>(child);
     }
 
     void IParentBlock.Reset()
@@ -108,15 +130,17 @@ public class PipelineBlock<T> : IPipelineBlock<T>
         return true;
     }
 
-    private async Task<BlockResult> SkipAsync(CancellationToken cancellationToken)
+    private BlockResult Skip()
     {
         (this as IParentBlock).Reset();
         var child = ChildCondition?.Invoke(this);
         if (child == null)
-            return BlockResult.Completed();
-        if (child == this || !child.SetParent(_parent))
-            return BlockResult.Error("");
-        return await child.ExecuteAsync(cancellationToken);
+            return BlockResult.Completed("Reached end of the pipeline");
+        if (child == this)
+            return BlockResult.Error("Child is current block");
+        if(!child.SetParent(_parent))
+            return BlockResult.Error("Unable to set child's parent");
+        return BlockResult.Execute<IExecutableBlock>(child);
     }
 
     bool IParentBlock.SetChild(Func<IBlock, IChildBlock?> setter)

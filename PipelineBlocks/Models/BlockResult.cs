@@ -19,10 +19,11 @@ public class BlockResult
         ResultType = resultType;
     }
 
-    public static BlockResult Completed() => new(default, null, null, BlockResultType.Completed);
+    public static BlockResult Completed(string? message = null) => new(default, null, message, BlockResultType.Completed);
     public static BlockResult Error(string? message = null) => new(default, null, message, BlockResultType.Error);
     public static BlockResult<T> Exit<T>(T? data = default) => new(data, null, null, BlockResultType.Exit);
     public static BlockResult<T> Forward<T>(T? data = default) => new(data, null, null, BlockResultType.Forward);
+    public static BlockResult<T> Execute<T>(T? data = default) => new(data, null, null, BlockResultType.Execute);
 }
 
 public class BlockResult<T> : BlockResult
@@ -34,7 +35,7 @@ public class BlockResult<T> : BlockResult
         Data = data;
     }
 
-    public new static BlockResult<T> Completed() => new(default, null, null, BlockResultType.Completed);
+    public new static BlockResult<T> Completed(string? message = null) => new(default, null, message, BlockResultType.Completed);
     public static BlockResult<T> Skip() => new(default, null, null, BlockResultType.Skip);
     public static new BlockResult<T> Error(string? message = null) => new(default, null, message, BlockResultType.Error);
     public static BlockResult<T> BackToCheckpoint(string? key = null) => new(default, key, null, BlockResultType.BackToCheckpoint);

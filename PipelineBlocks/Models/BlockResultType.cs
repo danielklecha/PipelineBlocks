@@ -8,5 +8,6 @@ public enum BlockResultType
     Forward,
     BackToCheckpoint,
     BackToExit,
-    Exit
+    Exit,
+    Execute
 }

@@ -215,7 +215,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task ForwardAsync_OneBlock_ShouldBeCompleted()
+    public async Task Job_ForwardResultWithOneBlock_ShouldBeCompleted()
     {
         // arrange
         var result = 123;
@@ -234,7 +234,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task ForwardAsync_TwoBlocks_ShouldBeCompleted()
+    public async Task Job_ForwardResultWithTwoBlocks_ShouldBeCompleted()
     {
         // arrange
         var block2 = new PipelineBlock<int>
@@ -256,7 +256,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task ForwardAsync_ChildIsParent_ShouldBeFalse()
+    public async Task Job_ForwardResultWhenChildIsParent_ShouldBeFalse()
     {
         // arrange
         var block = new PipelineBlock<int>
@@ -271,7 +271,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task ForwardAsync_ChildIsCompleted_ShouldBeFalse()
+    public async Task Job_ForwardResultWhenChildIsCompleted_ShouldBeFalse()
     {
         // arrange
         Mock<IChildBlock> block2 = new();
@@ -312,7 +312,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task ExitAsync_NoExit_ShouldReturnFalse()
+    public async Task Job_ExitResultWhenNoExit_ShouldReturnFalse()
     {
         // arrange
         var block1 = new PipelineBlock<int>()
@@ -327,7 +327,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task ExitAsync_HasExit_ShouldReturnSuccess()
+    public async Task Job_ExitResultWhenHasExit_ShouldReturnSuccess()
     {
         // arrange
         var result = 123;
@@ -365,7 +365,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task BackToCheckpointAsync_OneBlock_ShouldReturnFalse()
+    public async Task Job_BackToCheckpointResultWithOneBlock_ShouldReturnFalse()
     {
         // arrange
         var block = new PipelineBlock<int>
@@ -379,7 +379,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task BackToCheckpointAsync_NamedCheckpoint_ShouldReturnSuccess()
+    public async Task Job_BackToCheckpointResultWithNamedCheckpoint_ShouldReturnSuccess()
     {
         // arrange
         var block1 = new Mock<IPipelineBlock<object>>();
@@ -402,11 +402,11 @@ public class PipelineBlockTests
         // asset
         using var _ = new AssertionScope();
         block2.Verify(x => x.Reset(), Times.Once());
-        block1.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
+        block1.Verify(x => x.ExecuteSelfAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
 
     [TestMethod()]
-    public async Task BackToCheckpointAsync_UnnamedCheckpoint_ShouldReturnSuccess()
+    public async Task Job_BackToCheckpointResultWithUnnamedCheckpoint_ShouldReturnSuccess()
     {
         // arrange
         var block1 = new Mock<IPipelineBlock<object>>();
@@ -427,11 +427,11 @@ public class PipelineBlockTests
         // asset
         using var _ = new AssertionScope();
         block2.Verify(x => x.Reset(), Times.Once());
-        block1.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
+        block1.Verify(x => x.ExecuteSelfAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
 
     [TestMethod()]
-    public async Task BackToExitAsync_OneBlock_ShouldReturnFalse()
+    public async Task Job_BackToExitResultWithOneBlock_ShouldReturnError()
     {
         // arrange
         var block = new PipelineBlock<int>()
@@ -445,7 +445,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task BackToExitAsync_NamedExit_ShouldReturnSuccess()
+    public async Task Job_BackToExitResultWithNamedExit_ShouldReturnSuccess()
     {
         // arrange
         var block1 = new Mock<IPipelineBlock<object>>();
@@ -472,7 +472,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task BackToExitAsync_UnnamedExit_ShouldReturnSuccess()
+    public async Task Job_BackToExitResultWithUnnamedExit_ShouldReturnSuccess()
     {
         // arrange
         var block1 = new Mock<IPipelineBlock<object>>();
@@ -497,7 +497,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task SkipAsync_ChildIsCompleted_ShouldReturnFalse()
+    public async Task Job_SkipResultWhenChildIsCompleted_ShouldReturnFalse()
     {
         // arrange
         var block2 = new Mock<IPipelineBlock>();
@@ -514,7 +514,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task SkipAsync_OneBlock_ShouldReturnTrue()
+    public async Task Job_SkipResultWithOneBlock_ShouldReturnTrue()
     {
         // arrange
         var block = new PipelineBlock<int>
@@ -528,7 +528,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task SkipAsync_HasChild_ShouldReturnSuccess()
+    public async Task Job_SkipResultWhenHasChild_ShouldReturnSuccess()
     {
         // arrange
         var block2 = new Mock<IPipelineBlock<object>>();
@@ -544,11 +544,11 @@ public class PipelineBlockTests
         using var _ = new AssertionScope();
         block1.IsCompleted.Should().BeFalse();
         block2.Verify(x => x.SetParent(null), Times.Once());
-        block2.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
+        block2.Verify(x => x.ExecuteSelfAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
 
     [TestMethod()]
-    public async Task SkipAsync_ChildIsParent_ShouldBeFalse()
+    public async Task Job_SkipResultWhenChildIsParent_ShouldBeFalse()
     {
         // arrange
         var block = new PipelineBlock<int>
@@ -647,7 +647,7 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
-    public async Task SetStateMessage_DuringExecution_ShouldBeSuccess()
+    public async Task Job_ErrorResult_ShouldBeForwarded()
     {
         // arrange
         var message = "error";
@@ -667,14 +667,43 @@ public class PipelineBlockTests
     public async Task Job_CompletedResult_ShouldBeSuccess()
     {
         // arrange
-        var result = BlockResult<int>.Completed();
         var block = new PipelineBlock<int>
         {
-            Job = (_, _) => Task.FromResult(result)
+            Job = (_, _) => Task.FromResult(BlockResult<int>.Completed())
         };
         // act
         Func<Task<BlockResult>> act = () => block.ExecuteAsync();
         // assert
-        (await act.Should().NotThrowAsync()).Which.Should().Be(result);
+        (await act.Should().NotThrowAsync()).Which.ResultType.Should().Be(BlockResultType.Completed);
+    }
+
+    [TestMethod()]
+    public async Task Job_ExecuteResult_ShouldReturnError()
+    {
+        // arrange
+        var block = new PipelineBlock<IExecutableBlock>
+        {
+            Job = (x, _) => Task.FromResult<BlockResult<IExecutableBlock>>(BlockResult<IExecutableBlock>.Execute(x as IExecutableBlock))
+        };
+        // act
+        Func<Task<BlockResult>> act = () => block.ExecuteAsync();
+        // assert
+        (await act.Should().NotThrowAsync()).Which.ResultType.Should().Be(BlockResultType.Error);
+    }
+
+    [TestMethod()]
+    public async Task Job_Null_ShouldReturnError()
+    {
+        // arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        var block = new PipelineBlock<int>
+        {
+            Job = (x, _) => Task.FromResult<BlockResult<int>>(null)
+        };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+        // act
+        Func<Task<BlockResult>> act = () => block.ExecuteAsync();
+        // assert
+        (await act.Should().NotThrowAsync()).Which.ResultType.Should().Be(BlockResultType.Error);
     }
 }
