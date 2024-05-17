@@ -42,5 +42,4 @@ public interface IBlock
     /// Completed block was processed and not skipped
     /// </summary>
     bool IsCompleted { get; }
-    string? StateMessage { get; }
 }

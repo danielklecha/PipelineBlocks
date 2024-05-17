@@ -7,5 +7,5 @@ public interface IExecutableBlock
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> ExecuteAsync(CancellationToken cancellationToken = default);
+    Task<BlockResult> ExecuteAsync(CancellationToken cancellationToken = default);
 }

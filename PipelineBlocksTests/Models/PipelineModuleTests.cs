@@ -225,16 +225,4 @@ public class PipelineModuleTests
         // assert
         startBlock.Verify(x => x.SetParent(parent), Times.Once());
     }
-
-    [TestMethod()]
-    public void StateMessage_EndBlock_ShouldBeSet()
-    {
-        // arrange
-        var stateMessage = "ok";
-        Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.StateMessage).Returns(stateMessage);
-        PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
-        // act && assert
-        module.StateMessage.Should().Be(stateMessage);
-    }
 }

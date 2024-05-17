@@ -8,27 +8,25 @@ PipelineBlock<object> GetPipelineBlock()
 {
     return new PipelineBlock<object>()
     {
-        Job = async (x,c) =>
+        Job = (x,c) =>
         {
             Console.WriteLine( x.GetPath() );
             switch (Convert.ToInt32( Console.ReadLine() ))
             {
                 case -1:
                     Console.WriteLine( "GoBackToCheckpointAsync" );
-                    await x.BackToCheckpointAsync(cancellationToken: c);
-                    break;
+                    return Task.FromResult(BlockResult<object>.BackToCheckpoint());
                 case -2:
                     Console.WriteLine( "GoBackToExitAsync" );
-                    await x.BackToExitAsync(cancellationToken: c);
-                    break;
+                    return Task.FromResult(BlockResult<object>.BackToExit());
                 case 1:
                     Console.WriteLine( "GoForwardAsync" );
-                    await x.ForwardAsync(cancellationToken: c);
-                    break;
+                    return Task.FromResult(BlockResult.Forward<object>(123));
                 case 2:
                     Console.WriteLine( "SkipAsync" );
-                    await x.SkipAsync(c);
-                    break;
+                    return Task.FromResult(BlockResult<object>.Skip());
+                default:
+                    return Task.FromResult(BlockResult<object>.Error());
             };
         },
         NameCondition = x => "Block"
