@@ -15,7 +15,7 @@ using PipelineBlocks.Models;
 
 var block2 = new PipelineBlock<string>()
 {
-    Job = (x, c) => x.ForwardAsync("success", c),
+    Job = (x, c) => BlockResult.Forward("success"),
     KeyCondition = x => "block2",
     NameCondition = x => "block2",
     CheckpointCondition = x => false,
@@ -24,7 +24,7 @@ var block2 = new PipelineBlock<string>()
 };
 var block1 = new PipelineBlock<int>()
 {
-    Job = (x, c) => x.ForwardAsync(123, c),
+    Job = (x, c) => BlockResult.Forward(123),
     KeyCondition = x => "block1",
     NameCondition = x => "block1",
     CheckpointCondition = x => false,
@@ -42,14 +42,14 @@ participant PA as Parent A (exit)
 participant PB as Parent B (checkpoint)
 participant A as Active block (exit)
 participant CA as Child
-A ->> CA: ForwardAsync
+A ->> CA: BlockResult.Forward<T>
 Note left of CA: Continuue pipeline
-A ->> CA: SkipAsync
+A ->> CA: BlockResult<T>.Skip
 Note left of CA: Continuue pipeline
-A ->> PA: BackToExitAsync
+A ->> PA: BlockResult<T>.BackToExit
 Note right of PA: Finish pipeline
-A ->> PB: BackToCheckpointAsync
+A ->> PB: BlockResult<T>.BackToCheckpoint
 Note right of PB: Continuue pipeline
-A ->> A: ExitAsync
+A ->> A: BlockResult.Exit<T>
 Note right of A: Finish pipeline
 ```
