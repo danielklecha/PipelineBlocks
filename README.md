@@ -7,6 +7,17 @@
 
 A .NET Standard library that can be used to create two-directional pipeline blocks.
 
+## Features
+
+- It's asynchronous.
+- Allows moving forward and backward in the pipeline.
+- Allows skipping the current block and removing it from the pipeline.
+- Blocks can be marked as an exit, meaning the pipeline can be finished at that stage.
+- Blocks can be marked as a checkpoint, allowing the pipeline to revert to this stage from any descendant block.
+- Child blocks can be dynamically determined based on the data of the current block.
+- Blocks can be merged into modules for better organization and reuse.
+- The library includes unit tests.
+
 ## Example
 
 ```csharp
@@ -51,5 +62,7 @@ Note right of PA: Finish pipeline
 A ->> PB: BlockResult<T>.BackToCheckpoint
 Note right of PB: Continuue pipeline
 A ->> A: BlockResult.Exit<T>
+Note right of A: Finish pipeline
+A ->> A: BlockResult<T>.Error
 Note right of A: Finish pipeline
 ```
