@@ -1,9 +1,9 @@
 ﻿using FluentAssertions;
+using FluentAssertions.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using System.Diagnostics.CodeAnalysis;
-using FluentAssertions.Execution;
 using PipelineBlocks.Models;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PipelineBlocksTests.Models;
 
@@ -39,20 +39,20 @@ public class PipelineBlockTests
         // arrange
         PipelineBlock<object> block = new();
         // act & assert
-        block.HasExit.Should().BeTrue();
+         block.HasExit.Should().BeTrue();
     }
 
     [TestMethod()]
     public void Name_HasNameCondition_ShouldBeSet()
     {
         // arrange
-        var name = "myblock";
+        string name = "myblock";
         PipelineBlock<object> block = new()
         {
             NameCondition = x => name
         };
         // act & assert
-        block.Name.Should().Be(name);
+         block.Name.Should().Be(name);
     }
 
     [TestMethod()]
@@ -68,7 +68,7 @@ public class PipelineBlockTests
     public void Key_HasKeyCondition_ShouldBeSet()
     {
         // arrange
-        var key = "myblock";
+        string key = "myblock";
         PipelineBlock<object> block = new()
         {
             KeyCondition = x => key
@@ -199,7 +199,7 @@ public class PipelineBlockTests
     public async Task Data_AfterExecution_ShouldReturnTrue()
     {
         // arrange
-        var result = 123;
+        int result = 123;
         PipelineBlock<int> block = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult.Forward(result))
@@ -218,8 +218,8 @@ public class PipelineBlockTests
     public async Task Job_ForwardResultWithOneBlock_ShouldBeCompleted()
     {
         // arrange
-        var result = 123;
-        var block = new PipelineBlock<int>
+        int result = 123;
+        PipelineBlock<int> block = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult.Forward(result))
         };
@@ -237,11 +237,11 @@ public class PipelineBlockTests
     public async Task Job_ForwardResultWithTwoBlocks_ShouldBeCompleted()
     {
         // arrange
-        var block2 = new PipelineBlock<int>
+        PipelineBlock<int> block2 = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult.Forward(0))
         };
-        var block1 = new PipelineBlock<int>
+        PipelineBlock<int> block1 = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult.Forward(0)),
             ChildCondition = x => block2
@@ -249,7 +249,7 @@ public class PipelineBlockTests
         // act
         await block1.ExecuteAsync();
         // assert
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         block1.IsCompleted.Should().BeTrue();
         block2.Parent.Should().Be(block1);
         block2.IsCompleted.Should().BeTrue();
@@ -259,7 +259,7 @@ public class PipelineBlockTests
     public async Task Job_ForwardResultWhenChildIsParent_ShouldBeFalse()
     {
         // arrange
-        var block = new PipelineBlock<int>
+        PipelineBlock<int> block = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult.Forward(0))
         };
@@ -276,7 +276,7 @@ public class PipelineBlockTests
         // arrange
         Mock<IChildBlock> block2 = new();
         block2.Setup(x => x.SetParent(It.IsAny<IParentBlock>())).Returns(false);
-        var block1 = new PipelineBlock<int>
+        PipelineBlock<int> block1 = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult.Forward(0))
         };
@@ -292,7 +292,7 @@ public class PipelineBlockTests
     public async Task SetParent_IsCompleted_ShouldBeFalse()
     {
         // arrange
-        var block = new PipelineBlock<object>();
+        PipelineBlock<object> block = new();
         // act
         await block.ExecuteAsync();
         Func<bool> act = () => (block as IChildBlock).SetParent(new PipelineBlock<object>());
@@ -304,7 +304,7 @@ public class PipelineBlockTests
     public void SetParent_ParentBlock_ShouldBeTrue()
     {
         // arrange
-        var block = new PipelineBlock<object>();
+        PipelineBlock<object> block = new();
         // act
         Func<bool> act = () => (block as IChildBlock).SetParent(Mock.Of<IParentBlock>());
         // assert
@@ -315,7 +315,7 @@ public class PipelineBlockTests
     public async Task Job_ExitResultWhenNoExit_ShouldReturnFalse()
     {
         // arrange
-        var block1 = new PipelineBlock<int>()
+        PipelineBlock<int> block1 = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult.Exit<int>()),
             ChildCondition = x => Mock.Of<IChildBlock>()
@@ -330,8 +330,8 @@ public class PipelineBlockTests
     public async Task Job_ExitResultWhenHasExit_ShouldReturnSuccess()
     {
         // arrange
-        var result = 123;
-        var block = new PipelineBlock<int>()
+        int result = 123;
+        PipelineBlock<int> block = new()
         {
             ExitCondition = x => true,
             Job = (x, _) => Task.FromResult(BlockResult.Exit(result))
@@ -351,15 +351,14 @@ public class PipelineBlockTests
     public async Task Reset_IsExecuted_ShouldReturnFalse()
     {
         // arrange
-        var block = new PipelineBlock<int?>()
+        PipelineBlock<int?> block = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult.Exit<int?>(null))
         };
         // act
         await block.ExecuteAsync();
         (block as IParentBlock<int?>).Reset();
-        // asset
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         block.IsCompleted.Should().BeFalse();
         block.Data.Should().BeNull();
     }
@@ -368,7 +367,7 @@ public class PipelineBlockTests
     public async Task Job_BackToCheckpointResultWithOneBlock_ShouldReturnFalse()
     {
         // arrange
-        var block = new PipelineBlock<int>
+        PipelineBlock<int> block = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult<int>.BackToCheckpoint())
         };
@@ -382,9 +381,9 @@ public class PipelineBlockTests
     public async Task Job_BackToCheckpointResultWithNamedCheckpoint_ShouldReturnSuccess()
     {
         // arrange
-        var block1 = new Mock<IPipelineBlock<object>>();
-        var block2 = new Mock<IPipelineBlock<object>>();
-        var block3 = new PipelineBlock<int>
+        Mock<IPipelineBlock<object>> block1 = new();
+        Mock<IPipelineBlock<object>> block2 = new();
+        PipelineBlock<int> block3 = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult<int>.BackToCheckpoint("block1"))
         };
@@ -399,8 +398,7 @@ public class PipelineBlockTests
         (block3 as IChildBlock).SetParent(block2.Object);
         // act
         await block3.ExecuteAsync();
-        // asset
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         block2.Verify(x => x.Reset(), Times.Once());
         block1.Verify(x => x.ExecuteSelfAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
@@ -409,9 +407,9 @@ public class PipelineBlockTests
     public async Task Job_BackToCheckpointResultWithUnnamedCheckpoint_ShouldReturnSuccess()
     {
         // arrange
-        var block1 = new Mock<IPipelineBlock<object>>();
-        var block2 = new Mock<IPipelineBlock<object>>();
-        var block3 = new PipelineBlock<int>
+        Mock<IPipelineBlock<object>> block1 = new();
+        Mock<IPipelineBlock<object>> block2 = new();
+        PipelineBlock<int> block3 = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult<int>.BackToCheckpoint())
         };
@@ -424,8 +422,7 @@ public class PipelineBlockTests
         (block3 as IChildBlock).SetParent(block2.Object);
         // act
         await block3.ExecuteAsync();
-        // asset
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         block2.Verify(x => x.Reset(), Times.Once());
         block1.Verify(x => x.ExecuteSelfAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
@@ -434,7 +431,7 @@ public class PipelineBlockTests
     public async Task Job_BackToExitResultWithOneBlock_ShouldReturnError()
     {
         // arrange
-        var block = new PipelineBlock<int>()
+        PipelineBlock<int> block = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult<int>.BackToExit())
         };
@@ -448,9 +445,9 @@ public class PipelineBlockTests
     public async Task Job_BackToExitResultWithNamedExit_ShouldReturnSuccess()
     {
         // arrange
-        var block1 = new Mock<IPipelineBlock<object>>();
-        var block2 = new Mock<IPipelineBlock<object>>();
-        var block3 = new PipelineBlock<int>
+        Mock<IPipelineBlock<object>> block1 = new();
+        Mock<IPipelineBlock<object>> block2 = new();
+        PipelineBlock<int> block3 = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult<int>.BackToExit("block1"))
         };
@@ -465,8 +462,7 @@ public class PipelineBlockTests
         (block3 as IChildBlock).SetParent(block2.Object);
         // act
         await block3.ExecuteAsync();
-        // asset
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         block2.Verify(x => x.Reset(), Times.Once());
         block1.Verify(x => x.Reset(), Times.Never);
     }
@@ -475,9 +471,9 @@ public class PipelineBlockTests
     public async Task Job_BackToExitResultWithUnnamedExit_ShouldReturnSuccess()
     {
         // arrange
-        var block1 = new Mock<IPipelineBlock<object>>();
-        var block2 = new Mock<IPipelineBlock<object>>();
-        var block3 = new PipelineBlock<int>
+        Mock<IPipelineBlock<object>> block1 = new();
+        Mock<IPipelineBlock<object>> block2 = new();
+        PipelineBlock<int> block3 = new()
         {
             Job = (x, _) => Task.FromResult(BlockResult<int>.BackToExit())
         };
@@ -490,8 +486,7 @@ public class PipelineBlockTests
         (block3 as IChildBlock).SetParent(block2.Object);
         // act
         await block3.ExecuteAsync();
-        // asset
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         block2.Verify(x => x.Reset(), Times.Once());
         block1.Verify(x => x.Reset(), Times.Never);
     }
@@ -500,9 +495,9 @@ public class PipelineBlockTests
     public async Task Job_SkipResultWhenChildIsCompleted_ShouldReturnFalse()
     {
         // arrange
-        var block2 = new Mock<IPipelineBlock>();
+        Mock<IPipelineBlock> block2 = new();
         block2.Setup(x => x.SetParent(It.IsAny<IParentBlock>())).Returns(false);
-        var block1 = new PipelineBlock<int>
+        PipelineBlock<int> block1 = new()
         {
             Job = (x, c) => Task.FromResult(BlockResult<int>.Skip()),
             ChildCondition = x => block2.Object
@@ -517,7 +512,7 @@ public class PipelineBlockTests
     public async Task Job_SkipResultWithOneBlock_ShouldReturnTrue()
     {
         // arrange
-        var block = new PipelineBlock<int>
+        PipelineBlock<int> block = new()
         {
             Job = (x, c) => Task.FromResult(BlockResult<int>.Skip()),
         };
@@ -531,17 +526,16 @@ public class PipelineBlockTests
     public async Task Job_SkipResultWhenHasChild_ShouldReturnSuccess()
     {
         // arrange
-        var block2 = new Mock<IPipelineBlock<object>>();
+        Mock<IPipelineBlock<object>> block2 = new();
         block2.Setup(x => x.SetParent(It.IsAny<IParentBlock>())).Returns(true);
-        var block1 = new PipelineBlock<int>
+        PipelineBlock<int> block1 = new()
         {
             Job = (x, c) => Task.FromResult(BlockResult<int>.Skip()),
             ChildCondition = x => block2.Object
         };
         // act
         await block1.ExecuteAsync();
-        // asset
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         block1.IsCompleted.Should().BeFalse();
         block2.Verify(x => x.SetParent(null), Times.Once());
         block2.Verify(x => x.ExecuteSelfAsync(It.IsAny<CancellationToken>()), Times.Once());
@@ -551,7 +545,7 @@ public class PipelineBlockTests
     public async Task Job_SkipResultWhenChildIsParent_ShouldBeFalse()
     {
         // arrange
-        var block = new PipelineBlock<int>
+        PipelineBlock<int> block = new()
         {
             Job = (_, _) => Task.FromResult(BlockResult<int>.Skip()),
         };
@@ -566,12 +560,11 @@ public class PipelineBlockTests
     public void SetChild_BaseType_ShouldBeTrue()
     {
         // arrange
-        var block1 = new PipelineBlock<object>();
-        var block2 = Mock.Of<IChildBlock>();
+        PipelineBlock<object> block1 = new();
+        IChildBlock block2 = Mock.Of<IChildBlock>();
         // act
         Func<bool> act = () => block1.SetChild(block2);
-        // assert
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         act.Should().NotThrow().Which.Should().BeTrue();
         block1.Child.Should().Be(block2);
     }
@@ -580,7 +573,7 @@ public class PipelineBlockTests
     public async Task SetChild_BaseTypeIsCompleted_ShouldBeFalse()
     {
         // arrange
-        var block = new PipelineBlock<object>();
+        PipelineBlock<object> block = new();
         // act
         await block.ExecuteAsync();
         Func<bool> act = () => block.SetChild(Mock.Of<IChildBlock>());
@@ -592,15 +585,14 @@ public class PipelineBlockTests
     public void SetChild_GenericFunc_ShouldBeSuccess()
     {
         // arrange
-        var block1 = new PipelineBlock<int>
+        PipelineBlock<int> block1 = new()
         {
             Job = (_, _) => Task.FromResult(BlockResult.Forward(0))
         };
-        var block2 = Mock.Of<IChildBlock>();
+        IChildBlock block2 = Mock.Of<IChildBlock>();
         // act
         Func<bool> act = () => block1.SetChild(x => block2);
-        // assert
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         act.Should().NotThrow().Which.Should().BeTrue();
         block1.Child.Should().Be(block2);
     }
@@ -609,7 +601,7 @@ public class PipelineBlockTests
     public async Task SetChild_GenericFuncIsCompleted_ShouldReturnFalse()
     {
         // arrange
-        var block = new PipelineBlock<object>();
+        PipelineBlock<object> block = new();
         // act
         await block.ExecuteAsync();
         Func<bool> act = () => block.SetChild(x => Mock.Of<IChildBlock>());
@@ -621,15 +613,14 @@ public class PipelineBlockTests
     public void SetChild_BaseFunc_ShouldBeSuccess()
     {
         // arrange
-        var block1 = new PipelineBlock<int>
+        PipelineBlock<int> block1 = new()
         {
             Job = (_, _) => Task.FromResult(BlockResult.Forward(0))
         };
-        var block2 = Mock.Of<IChildBlock>();
+        IChildBlock block2 = Mock.Of<IChildBlock>();
         // act
         Func<bool> act = () => (block1 as IParentBlock).SetChild(x => block2);
-        // assert
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         act.Should().NotThrow().Which.Should().BeTrue();
         block1.Child.Should().Be(block2);
     }
@@ -638,7 +629,7 @@ public class PipelineBlockTests
     public async Task SetChild_BaseFuncIsCompleted_ShouldReturnFalse()
     {
         // arrange
-        var block = new PipelineBlock<object>();
+        PipelineBlock<object> block = new();
         // act
         await block.ExecuteAsync();
         Func<bool> act = () => (block as IParentBlock).SetChild(x => Mock.Of<IChildBlock>());
@@ -650,9 +641,9 @@ public class PipelineBlockTests
     public async Task Job_ErrorResult_ShouldBeForwarded()
     {
         // arrange
-        var message = "error";
-        var result = BlockResult<int>.Error(message);
-        var block = new PipelineBlock<int>()
+        string message = "error";
+        BlockResult<int> result = BlockResult<int>.Error(message);
+        PipelineBlock<int> block = new()
         {
             Job = (_, _) => Task.FromResult(result)
         };
@@ -667,7 +658,7 @@ public class PipelineBlockTests
     public async Task Job_CompletedResult_ShouldBeSuccess()
     {
         // arrange
-        var block = new PipelineBlock<int>
+        PipelineBlock<int> block = new()
         {
             Job = (_, _) => Task.FromResult(BlockResult<int>.Completed())
         };
@@ -681,7 +672,7 @@ public class PipelineBlockTests
     public async Task Job_ExecuteResult_ShouldReturnError()
     {
         // arrange
-        var block = new PipelineBlock<IExecutableBlock>
+        PipelineBlock<IExecutableBlock> block = new()
         {
             Job = (x, _) => Task.FromResult<BlockResult<IExecutableBlock>>(BlockResult<IExecutableBlock>.Execute(x as IExecutableBlock))
         };
@@ -696,7 +687,7 @@ public class PipelineBlockTests
     {
         // arrange
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        var block = new PipelineBlock<int>
+        PipelineBlock<int> block = new()
         {
             Job = (x, _) => Task.FromResult<BlockResult<int>>(null)
         };

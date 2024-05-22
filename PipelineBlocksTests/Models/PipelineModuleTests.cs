@@ -1,13 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using PipelineBlocks.Models;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PipelineBlocks.Models.Tests;
 
@@ -19,48 +13,48 @@ public class PipelineModuleTests
     public void Data_EndBlock_ShouldBeSet()
     {
         // arrange
-        var data = 123;
+        int data = 123;
         Mock<IParentBlock> endBlock = new();
-        endBlock.Setup(x => x.Data).Returns(data);
+        _ = endBlock.Setup(x => x.Data).Returns(data);
         PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
-        module.Data.Should().Be(data);
+        _ = module.Data.Should().Be(data);
     }
 
     [TestMethod()]
     public void Data_GenericEndBlock_ShouldBeSet()
     {
         // arrange
-        var data = 123;
+        int data = 123;
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.Data).Returns(data);
+        _ = endBlock.Setup(x => x.Data).Returns(data);
         PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
-        module.Data.Should().Be(data);
+        _ = module.Data.Should().Be(data);
     }
 
     [TestMethod()]
     public void Name_EndBlock_ShouldBeSet()
     {
         // arrange
-        var name = "endBlock";
+        string name = "endBlock";
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.Name).Returns(name);
+        _ = endBlock.Setup(x => x.Name).Returns(name);
         PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
-        module.Name.Should().Be(name);
+        _ = module.Name.Should().Be(name);
     }
 
     [TestMethod()]
     public void Key_EndBlock_ShouldBeSet()
     {
         // arrange
-        var key = "endBlock";
+        string key = "endBlock";
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.Key).Returns(key);
+        _ = endBlock.Setup(x => x.Key).Returns(key);
         PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
-        module.Key.Should().Be(key);
+        _ = module.Key.Should().Be(key);
     }
 
     [TestMethod()]
@@ -68,12 +62,12 @@ public class PipelineModuleTests
     {
         // arrange
         Mock<IChildBlock> startBlock = new();
-        startBlock.Setup(x => x.IsCheckpoint).Returns(true);
+        _ = startBlock.Setup(x => x.IsCheckpoint).Returns(true);
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
+        _ = endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
         PipelineModule<object> module = new(startBlock.Object, endBlock.Object);
         // act && assert
-        module.IsCheckpoint.Should().BeTrue();
+        _ = module.IsCheckpoint.Should().BeTrue();
     }
 
     [TestMethod()]
@@ -82,11 +76,11 @@ public class PipelineModuleTests
         // arrange
         Mock<IChildBlock> startBlock = new();
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
-        endBlock.Setup(x => x.IsCheckpoint).Returns(true);
+        _ = endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
+        _ = endBlock.Setup(x => x.IsCheckpoint).Returns(true);
         PipelineModule<object> module = new(startBlock.Object, endBlock.Object);
         // act && assert
-        module.IsCheckpoint.Should().BeTrue();
+        _ = module.IsCheckpoint.Should().BeTrue();
     }
 
     [TestMethod()]
@@ -94,12 +88,12 @@ public class PipelineModuleTests
     {
         // arrange
         Mock<IChildBlock> startBlock = new();
-        startBlock.Setup(x => x.HasExit).Returns(true);
+        _ = startBlock.Setup(x => x.HasExit).Returns(true);
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
+        _ = endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
         PipelineModule<object> module = new(startBlock.Object, endBlock.Object);
         // act && assert
-        module.HasExit.Should().BeTrue();
+        _ = module.HasExit.Should().BeTrue();
     }
 
     [TestMethod()]
@@ -108,11 +102,11 @@ public class PipelineModuleTests
         // arrange
         Mock<IChildBlock> startBlock = new();
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
-        startBlock.Setup(x => x.HasExit).Returns(true);
+        _ = endBlock.Setup(x => x.Parent).Returns(startBlock.Object);
+        _ = startBlock.Setup(x => x.HasExit).Returns(true);
         PipelineModule<object> module = new(startBlock.Object, endBlock.Object);
         // act && assert
-        module.HasExit.Should().BeTrue();
+        _ = module.HasExit.Should().BeTrue();
     }
 
     [TestMethod()]
@@ -121,10 +115,10 @@ public class PipelineModuleTests
         // arrange
         IParentBlock parent = Mock.Of<IParentBlock>();
         Mock<IChildBlock> startBlock = new();
-        startBlock.Setup(x => x.Parent).Returns(parent);
+        _ = startBlock.Setup(x => x.Parent).Returns(parent);
         PipelineModule<object> module = new(startBlock.Object, Mock.Of<IParentBlock<object>>());
         // act && assert
-        module.Parent.Should().Be(parent);
+        _ = module.Parent.Should().Be(parent);
     }
 
     [TestMethod()]
@@ -132,10 +126,10 @@ public class PipelineModuleTests
     {
         // arrange
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.IsCompleted).Returns(true);
+        _ = endBlock.Setup(x => x.IsCompleted).Returns(true);
         PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
-        module.IsCompleted.Should().BeTrue();
+        _ = module.IsCompleted.Should().BeTrue();
     }
 
     [TestMethod()]
@@ -144,10 +138,10 @@ public class PipelineModuleTests
         // arrange
         IChildBlock child = Mock.Of<IChildBlock>();
         Mock<IParentBlock<object>> endBlock = new();
-        endBlock.Setup(x => x.Child).Returns(child);
+        _ = endBlock.Setup(x => x.Child).Returns(child);
         PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act && assert
-        module.Child.Should().Be(child);
+        _ = module.Child.Should().Be(child);
     }
 
     [TestMethod()]
@@ -157,7 +151,7 @@ public class PipelineModuleTests
         Mock<IChildBlock> startBlock = new();
         PipelineModule<object> module = new(startBlock.Object, Mock.Of<IParentBlock<object>>());
         // act
-        await module.ExecuteAsync();
+        _ = await module.ExecuteAsync();
         // assert
         startBlock.Verify(x => x.ExecuteAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
@@ -169,7 +163,7 @@ public class PipelineModuleTests
         Mock<IChildBlock> startBlock = new();
         PipelineModule<object> module = new(startBlock.Object, Mock.Of<IParentBlock<object>>());
         // act
-        await (module as IExecutableBlock).ExecuteSelfAsync();
+        _ = await (module as IExecutableBlock).ExecuteSelfAsync();
         // assert
         startBlock.Verify(x => x.ExecuteSelfAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
@@ -194,7 +188,7 @@ public class PipelineModuleTests
         Mock<IParentBlock> endBlock = new();
         PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act
-        module.SetChild(child);
+        _ = module.SetChild(child);
         // assert
         endBlock.Verify(x => x.SetChild(child), Times.Once());
     }
@@ -207,7 +201,7 @@ public class PipelineModuleTests
         Mock<IParentBlock> endBlock = new();
         PipelineModule module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act
-        module.SetChild(func);
+        _ = module.SetChild(func);
         // assert
         endBlock.Verify(x => x.SetChild(func), Times.Once());
     }
@@ -220,7 +214,7 @@ public class PipelineModuleTests
         Mock<IParentBlock<object>> endBlock = new();
         PipelineModule<object> module = new(Mock.Of<IChildBlock>(), endBlock.Object);
         // act
-        module.SetChild(func);
+        _ = module.SetChild(func);
         // assert
         endBlock.Verify(x => x.SetChild(func), Times.Once());
     }
@@ -233,7 +227,7 @@ public class PipelineModuleTests
         Mock<IChildBlock> startBlock = new();
         PipelineModule<object> module = new(startBlock.Object, Mock.Of<IParentBlock<object>>());
         // act
-        (module as IChildBlock).SetParent(parent);
+        _ = (module as IChildBlock).SetParent(parent);
         // assert
         startBlock.Verify(x => x.SetParent(parent), Times.Once());
     }

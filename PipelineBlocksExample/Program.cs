@@ -2,28 +2,28 @@
 using PipelineBlocks.Extensions;
 using PipelineBlocks.Models;
 
-Console.WriteLine( "Hello, World!" );
+Console.WriteLine("Hello, World!");
 
-PipelineBlock<object> GetPipelineBlock()
+static PipelineBlock<object> GetPipelineBlock()
 {
     return new PipelineBlock<object>()
     {
-        Job = (x,c) =>
+        Job = (x, c) =>
         {
-            Console.WriteLine( x.GetPath() );
-            switch (Convert.ToInt32( Console.ReadLine() ))
+            Console.WriteLine(x.GetPath());
+            switch (Convert.ToInt32(Console.ReadLine()))
             {
                 case -1:
-                    Console.WriteLine( "GoBackToCheckpointAsync" );
+                    Console.WriteLine("GoBackToCheckpointAsync");
                     return Task.FromResult(BlockResult<object>.BackToCheckpoint());
                 case -2:
-                    Console.WriteLine( "GoBackToExitAsync" );
+                    Console.WriteLine("GoBackToExitAsync");
                     return Task.FromResult(BlockResult<object>.BackToExit());
                 case 1:
-                    Console.WriteLine( "GoForwardAsync" );
+                    Console.WriteLine("GoForwardAsync");
                     return Task.FromResult(BlockResult.Forward<object>(123));
                 case 2:
-                    Console.WriteLine( "SkipAsync" );
+                    Console.WriteLine("SkipAsync");
                     return Task.FromResult(BlockResult<object>.Skip());
                 default:
                     return Task.FromResult(BlockResult<object>.Error());
@@ -32,7 +32,7 @@ PipelineBlock<object> GetPipelineBlock()
         NameCondition = x => "Block"
     };
 }
-var block = GetPipelineBlock();
+PipelineBlock<object> block = GetPipelineBlock();
 block.SetChild(GetPipelineBlock());
 block.SetChild(GetPipelineBlock());
 block.SetChild(GetPipelineBlock());

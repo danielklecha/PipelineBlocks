@@ -14,9 +14,9 @@ public class BlockExtensionsTests
     public void EnumerateDescendants_TwoDescendants_ShouldBeSuccess()
     {
         // arrange
-        var block1 = new Mock<IBlock>();
-        var block2 = new Mock<IBlock>();
-        var block3 = new Mock<IBlock>();
+        Mock<IBlock> block1 = new();
+        Mock<IBlock> block2 = new();
+        Mock<IBlock> block3 = new();
         block1.Setup(x => x.Child).Returns(block2.Object);
         block2.Setup(x => x.Child).Returns(block3.Object);
         // act & assert
@@ -27,9 +27,9 @@ public class BlockExtensionsTests
     public void EnumerateAncestors_TwoAncestors_ShouldBeSuccess()
     {
         // arrange
-        var block1 = new Mock<IBlock>();
-        var block2 = new Mock<IBlock>();
-        var block3 = new Mock<IBlock>();
+        Mock<IBlock> block1 = new();
+        Mock<IBlock> block2 = new();
+        Mock<IBlock> block3 = new();
         block2.Setup(x => x.Parent).Returns(block1.Object);
         block3.Setup(x => x.Parent).Returns(block2.Object);
         // act & assert
@@ -40,9 +40,9 @@ public class BlockExtensionsTests
     public void GetAncestorData_BaseType_ShouldBeSuccessed()
     {
         // arrange
-        var block1 = new Mock<IBlock>();
+        Mock<IBlock> block1 = new();
         block1.Setup(x => x.Data).Returns(1);
-        var block2 = new Mock<IBlock>();
+        Mock<IBlock> block2 = new();
         block2.Setup(x => x.Parent).Returns(block1.Object);
         block2.Setup(x => x.Data).Returns(2);
         // act & assert
@@ -53,8 +53,8 @@ public class BlockExtensionsTests
     public void GetDescendantData_BaseType_ShouldBeSuccessed()
     {
         // arrange
-        var block1 = new Mock<IBlock>();
-        var block2 = new Mock<IBlock>();
+        Mock<IBlock> block1 = new();
+        Mock<IBlock> block2 = new();
         block1.Setup(x => x.Data).Returns(1);
         block1.Setup(x => x.Child).Returns(block2.Object);
         block2.Setup(x => x.Data).Returns(2);
@@ -66,9 +66,9 @@ public class BlockExtensionsTests
     public void GetAncestorData_BaseTypeWithKey_ShouldBeSuccessed()
     {
         // arrange
-        var block1 = new Mock<IBlock>();
-        var block2 = new Mock<IBlock>();
-        var block3 = new Mock<IBlock>();
+        Mock<IBlock> block1 = new();
+        Mock<IBlock> block2 = new();
+        Mock<IBlock> block3 = new();
         block1.Setup(x => x.Key).Returns("block1");
         block1.Setup(x => x.Data).Returns(1);
         block2.Setup(x => x.Data).Returns(2);
@@ -82,9 +82,9 @@ public class BlockExtensionsTests
     public void GetDescendantData_BaseTypeWithKey_ShouldBeSuccessed()
     {
         // arrange
-        var block1 = new Mock<IBlock>();
-        var block2 = new Mock<IBlock>();
-        var block3 = new Mock<IBlock>();
+        Mock<IBlock> block1 = new();
+        Mock<IBlock> block2 = new();
+        Mock<IBlock> block3 = new();
         block1.Setup(x => x.Key).Returns("block1");
         block1.Setup(x => x.Data).Returns(1);
         block1.Setup(x => x.Child).Returns(block2.Object);
@@ -101,9 +101,9 @@ public class BlockExtensionsTests
     public void GetAncestorData_GenericType_ShouldBeSuccessed()
     {
         // arrange
-        var block1 = new Mock<IParentBlock<int>>();
+        Mock<IParentBlock<int>> block1 = new();
         block1.Setup(x => x.Data).Returns(1);
-        var block2 = new Mock<IParentBlock<int>>();
+        Mock<IParentBlock<int>> block2 = new();
         block2.Setup(x => x.Parent).Returns(block1.Object);
         block2.Setup(x => x.Data).Returns(2);
         // act & assert
@@ -114,8 +114,8 @@ public class BlockExtensionsTests
     public void GetDescendantData_GenericType_ShouldBeSuccessed()
     {
         // arrange
-        var block1 = new Mock<IBlock<int>>();
-        var block2 = new Mock<IBlock<int>>();
+        Mock<IBlock<int>> block1 = new();
+        Mock<IBlock<int>> block2 = new();
         block1.Setup(x => x.Data).Returns(1);
         block1.Setup(x => x.Child).Returns(block2.Object);
         block2.Setup(x => x.Data).Returns(2);
@@ -127,9 +127,9 @@ public class BlockExtensionsTests
     public void GetAncestorData_GenericTypeWithKey_ShouldBeSuccessed()
     {
         // arrange
-        var block1 = new Mock<IBlock<int>>();
-        var block2 = new Mock<IBlock<int>>();
-        var block3 = new Mock<IBlock<int>>();
+        Mock<IBlock<int>> block1 = new();
+        Mock<IBlock<int>> block2 = new();
+        Mock<IBlock<int>> block3 = new();
         block1.Setup(x => x.Key).Returns("block1");
         block1.Setup(x => x.Data).Returns(1);
         block2.Setup(x => x.Data).Returns(2);
@@ -143,9 +143,9 @@ public class BlockExtensionsTests
     public void GetDescendantData_GenericTypeWithKey_ShouldBeSuccessed()
     {
         // arrange
-        var block1 = new Mock<IBlock<int>>();
-        var block2 = new Mock<IBlock<int>>();
-        var block3 = new Mock<IBlock<int>>();
+        Mock<IBlock<int>> block1 = new();
+        Mock<IBlock<int>> block2 = new();
+        Mock<IBlock<int>> block3 = new();
         block1.Setup(x => x.Key).Returns("block1");
         block1.Setup(x => x.Data).Returns(1);
         block1.Setup(x => x.Child).Returns(block2.Object);
@@ -162,9 +162,9 @@ public class BlockExtensionsTests
     public void GetPath_ThreeBlocks_ShouldBeSet()
     {
         // arrange
-        var block1 = new Mock<IPipelineBlock>();
-        var block2 = new Mock<IPipelineBlock>();
-        var block3 = new Mock<IPipelineBlock>();
+        Mock<IPipelineBlock> block1 = new();
+        Mock<IPipelineBlock> block2 = new();
+        Mock<IPipelineBlock> block3 = new();
         block1.Setup(x => x.Name).Returns("block1");
         block2.Setup(x => x.Name).Returns("block2");
         block2.Setup(x => x.Parent).Returns(block1.Object);

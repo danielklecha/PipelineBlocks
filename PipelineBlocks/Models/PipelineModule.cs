@@ -20,43 +20,22 @@ public class PipelineModule(IChildBlock startBlock, IParentBlock endBlock) : IPi
 
     public bool IsCompleted => endBlock.IsCompleted;
 
-    public Task<BlockResult> ExecuteAsync(CancellationToken cancellationToken = default)
-    {
-        return startBlock.ExecuteAsync(cancellationToken);
-    }
+    public Task<BlockResult> ExecuteAsync(CancellationToken cancellationToken = default) => startBlock.ExecuteAsync(cancellationToken);
 
-    void IParentBlock.Reset()
-    {
-        endBlock.Reset();
-    }
+    void IParentBlock.Reset() => endBlock.Reset();
 
-    public bool SetChild(Func<IBlock, IChildBlock?> setter)
-    {
-        return endBlock.SetChild(setter);
-    }
+    public bool SetChild(Func<IBlock, IChildBlock?> setter) => endBlock.SetChild(setter);
 
-    public bool SetChild(IChildBlock? block)
-    {
-        return endBlock.SetChild(block);
-    }
+    public bool SetChild(IChildBlock? block) => endBlock.SetChild(block);
 
-    bool IChildBlock.SetParent(IParentBlock? parent)
-    {
-        return startBlock.SetParent(parent);
-    }
+    bool IChildBlock.SetParent(IParentBlock? parent) => startBlock.SetParent(parent);
 
-    Task<BlockResult> IExecutableBlock.ExecuteSelfAsync(CancellationToken cancellationToken)
-    {
-        return startBlock.ExecuteSelfAsync(cancellationToken);
-    }
+    Task<BlockResult> IExecutableBlock.ExecuteSelfAsync(CancellationToken cancellationToken) => startBlock.ExecuteSelfAsync(cancellationToken);
 }
 
 public class PipelineModule<T>(IChildBlock startBlock, IParentBlock<T> endBlock) : PipelineModule(startBlock, endBlock), IPipelineModule<T>
 {
     public new T? Data => endBlock.Data;
 
-    public bool SetChild(Func<IBlock<T>, IChildBlock?> setter)
-    {
-        return endBlock.SetChild(setter);
-    }
+    public bool SetChild(Func<IBlock<T>, IChildBlock?> setter) => endBlock.SetChild(setter);
 }

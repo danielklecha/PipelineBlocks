@@ -12,8 +12,8 @@ public static class ParentBlockExtensions
     /// <returns></returns>
     public static bool SetDescendants(this IParentBlock block, params IPipelineModule[] descendants)
     {
-        var parent = block;
-        foreach (var descendant in descendants)
+        IParentBlock parent = block;
+        foreach (IPipelineModule descendant in descendants)
         {
             if (!parent.SetChild(descendant))
                 return false;

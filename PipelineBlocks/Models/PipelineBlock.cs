@@ -33,23 +33,23 @@ public class PipelineBlock<T> : IPipelineBlock<T>
             IsCompleted = true;
             return BlockResult.Error("No job");
         }
-        var result = await Job.Invoke(this, cancellationToken);
-        if (result is null)
-            return BlockResult.Error("Job returned null");
-        return result.ResultType switch
-        {
-            BlockResultType.Exit or BlockResultType.Completed => Exit(result),
-            BlockResultType.Forward => Forward(result),
-            BlockResultType.BackToCheckpoint => BackToCheckpoint(result),
-            BlockResultType.BackToExit => BackToExit(result),
-            BlockResultType.Skip => Skip(),
-            _ => result
-        };
+        BlockResult<T>? result = await Job.Invoke(this, cancellationToken);
+        return result is null
+            ? BlockResult.Error("Job returned null")
+            : result.ResultType switch
+            {
+                BlockResultType.Exit or BlockResultType.Completed => Exit(result),
+                BlockResultType.Forward => Forward(result),
+                BlockResultType.BackToCheckpoint => BackToCheckpoint(result),
+                BlockResultType.BackToExit => BackToExit(result),
+                BlockResultType.Skip => Skip(),
+                _ => result
+            };
     }
 
     public async Task<BlockResult> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        var result = await (this as IExecutableBlock).ExecuteSelfAsync(cancellationToken);
+        BlockResult? result = await (this as IExecutableBlock).ExecuteSelfAsync(cancellationToken);
         while (true)
         {
             if (result is null)
@@ -82,22 +82,22 @@ public class PipelineBlock<T> : IPipelineBlock<T>
 
     private BlockResult BackToCheckpoint(BlockResult result)
     {
-        var targetDescendant = this.EnumerateAncestors().OfType<IParentBlock>().FirstOrDefault(x => x.IsCheckpoint && (result.Key == null || string.Equals(result.Key, x.Key, StringComparison.OrdinalIgnoreCase)));
+        IParentBlock targetDescendant = this.EnumerateAncestors().OfType<IParentBlock>().FirstOrDefault(x => x.IsCheckpoint && (result.Key == null || string.Equals(result.Key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetDescendant == null)
             return BlockResult.Error("Unable to find checkpoint");
         (this as IParentBlock).Reset();
-        foreach (var descendant in this.EnumerateAncestors().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
+        foreach (IParentBlock? descendant in this.EnumerateAncestors().OfType<IParentBlock>().TakeWhile(x => x != targetDescendant))
             descendant.Reset();
         return BlockResult.Execute<IExecutableBlock>(targetDescendant);
     }
 
     private BlockResult BackToExit(BlockResult result)
     {
-        var targetAncestor = this.EnumerateAncestors().OfType<IParentBlock>().FirstOrDefault(x => x.HasExit && (result.Key == null || string.Equals(result.Key, x.Key, StringComparison.OrdinalIgnoreCase)));
+        IParentBlock targetAncestor = this.EnumerateAncestors().OfType<IParentBlock>().FirstOrDefault(x => x.HasExit && (result.Key == null || string.Equals(result.Key, x.Key, StringComparison.OrdinalIgnoreCase)));
         if (targetAncestor == null)
             return BlockResult.Error("Unable to find exit");
         (this as IParentBlock).Reset();
-        foreach (var descendant in this.EnumerateAncestors().OfType<IParentBlock>().TakeWhile(x => x != targetAncestor))
+        foreach (IParentBlock? descendant in this.EnumerateAncestors().OfType<IParentBlock>().TakeWhile(x => x != targetAncestor))
             descendant.Reset();
         return BlockResult.Completed("Back to exit result");
     }
@@ -106,14 +106,14 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     {
         Data = result.Data;
         IsCompleted = true;
-        var child = ChildCondition?.Invoke(this);
-        if (child == null)
-            return BlockResult.Completed("Reached end of the pipeline");
-        if (child == this)
-            return BlockResult.Error("Child is current block");
-        if (!child.SetParent(this))
-            return BlockResult.Error("Unable to set child's parent");
-        return BlockResult.Execute<IExecutableBlock>(child);
+        IChildBlock? child = ChildCondition?.Invoke(this);
+        return child == null
+            ? BlockResult.Completed("Reached end of the pipeline")
+            : child == this
+            ? BlockResult.Error("Child is current block")
+            : !child.SetParent(this)
+            ? BlockResult.Error("Unable to set child's parent")
+            : BlockResult.Execute<IExecutableBlock>(child);
     }
 
     void IParentBlock.Reset()
@@ -133,14 +133,14 @@ public class PipelineBlock<T> : IPipelineBlock<T>
     private BlockResult Skip()
     {
         (this as IParentBlock).Reset();
-        var child = ChildCondition?.Invoke(this);
-        if (child == null)
-            return BlockResult.Completed("Reached end of the pipeline");
-        if (child == this)
-            return BlockResult.Error("Child is current block");
-        if(!child.SetParent(_parent))
-            return BlockResult.Error("Unable to set child's parent");
-        return BlockResult.Execute<IExecutableBlock>(child);
+        IChildBlock? child = ChildCondition?.Invoke(this);
+        return child == null
+            ? BlockResult.Completed("Reached end of the pipeline")
+            : child == this
+            ? BlockResult.Error("Child is current block")
+            : !child.SetParent(_parent)
+            ? BlockResult.Error("Unable to set child's parent")
+            : BlockResult.Execute<IExecutableBlock>(child);
     }
 
     bool IParentBlock.SetChild(Func<IBlock, IChildBlock?> setter)

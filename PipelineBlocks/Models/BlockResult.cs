@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PipelineBlocks.Models;
+﻿namespace PipelineBlocks.Models;
 
 public class BlockResult
 {
@@ -30,12 +26,9 @@ public class BlockResult<T> : BlockResult
 {
     public new T? Data { get; }
 
-    internal BlockResult(T? data, string? key, string? message, BlockResultType resultType) : base(data, key, message, resultType)
-    {
-        Data = data;
-    }
+    internal BlockResult(T? data, string? key, string? message, BlockResultType resultType) : base(data, key, message, resultType) => Data = data;
 
-    public new static BlockResult<T> Completed(string? message = null) => new(default, null, message, BlockResultType.Completed);
+    public static new BlockResult<T> Completed(string? message = null) => new(default, null, message, BlockResultType.Completed);
     public static BlockResult<T> Skip() => new(default, null, null, BlockResultType.Skip);
     public static new BlockResult<T> Error(string? message = null) => new(default, null, message, BlockResultType.Error);
     public static BlockResult<T> BackToCheckpoint(string? key = null) => new(default, key, null, BlockResultType.BackToCheckpoint);

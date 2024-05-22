@@ -15,15 +15,14 @@ public class ParentBlockExtensionsTests
     public void SetDescendants_TwoDescendants_ShouldBeSuccess()
     {
         // arrange
-        var block1 = new Mock<IPipelineBlock>();
+        Mock<IPipelineBlock> block1 = new();
         block1.Setup(x => x.SetChild(It.IsAny<IPipelineBlock>())).Returns(true);
-        var block2 = new Mock<IPipelineBlock>();
+        Mock<IPipelineBlock> block2 = new();
         block2.Setup(x => x.SetChild(It.IsAny<IPipelineBlock>())).Returns(true);
-        var block3 = new Mock<IPipelineBlock>();
+        Mock<IPipelineBlock> block3 = new();
         // act
         block1.Object.SetDescendants(block2.Object, block3.Object);
-        // assert
-        using var _ = new AssertionScope();
+        using AssertionScope assertionScope = new();
         block1.Verify(x => x.SetChild(block2.Object), Times.Once());
         block2.Verify(x => x.SetChild(block3.Object), Times.Once());
     }
@@ -32,8 +31,8 @@ public class ParentBlockExtensionsTests
     public void SetDescendants_CompletedDescendant_ShouldBeSuccess()
     {
         // arrange
-        var block1 = new Mock<IPipelineBlock>();
-        var block2 = new Mock<IPipelineBlock>();
+        Mock<IPipelineBlock> block1 = new();
+        Mock<IPipelineBlock> block2 = new();
         block2.Setup(x => x.SetChild(It.IsAny<IPipelineBlock>())).Returns(false);
         // act
         Func<bool> act = () => block1.Object.SetDescendants(block2.Object);

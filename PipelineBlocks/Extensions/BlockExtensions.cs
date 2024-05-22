@@ -6,7 +6,7 @@ public static class BlockExtensions
 {
     public static IEnumerable<IBlock> EnumerateAncestors(this IBlock block)
     {
-        var parent = block.Parent;
+        IBlock? parent = block.Parent;
         while (parent != null)
         {
             yield return parent;
@@ -26,14 +26,11 @@ public static class BlockExtensions
             .FirstOrDefault();
     }
 
-    public static string GetPath(this IBlock block)
-    {
-        return string.Join("\\", block.EnumerateAncestors().Reverse().Concat(Enumerable.Repeat(block, 1)).Select(x => x.Name).Where(x => !string.IsNullOrEmpty(x)));
-    }
+    public static string GetPath(this IBlock block) => string.Join("\\", block.EnumerateAncestors().Reverse().Concat(Enumerable.Repeat(block, 1)).Select(x => x.Name).Where(x => !string.IsNullOrEmpty(x)));
 
     public static IEnumerable<IBlock> EnumerateDescendants(this IBlock block)
     {
-        var child = block.Child;
+        IBlock? child = block.Child;
         while (child != null)
         {
             yield return child;
@@ -53,8 +50,5 @@ public static class BlockExtensions
             .FirstOrDefault();
     }
 
-    public static bool IsActive(this IBlock block)
-    {
-        return !block.IsCompleted && (block.Parent?.IsCompleted ?? true);
-    }
+    public static bool IsActive(this IBlock block) => !block.IsCompleted && (block.Parent?.IsCompleted ?? true);
 }
