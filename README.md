@@ -7,6 +7,11 @@
 
 A .NET Standard library that can be used to create two-directional pipeline blocks.
 
+## Strong named version
+
+[![NuGet](https://img.shields.io/nuget/v/PipelineBlocks.StrongName.svg)](https://www.nuget.org/packages/PipelineBlocks.StrongName)
+[![NuGet downloads](https://img.shields.io/nuget/dt/PipelineBlocks.StrongName.svg)](https://www.nuget.org/packages/PipelineBlocks.StrongName)
+
 ## Features
 
 - It's asynchronous.
@@ -66,3 +71,7 @@ Note right of A: Finish pipeline
 A ->> A: BlockResult<T>.Error
 Note right of A: Finish pipeline
 ```
+
+## License
+
+`PipelineBlocks` is provided as-is under the MIT license.

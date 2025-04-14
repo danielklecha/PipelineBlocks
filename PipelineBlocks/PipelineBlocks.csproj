@@ -7,6 +7,8 @@
     <NullableReferenceTypes>true</NullableReferenceTypes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	<PackageIcon>icon.png</PackageIcon>
+	<PackageIconUrl />
     <PackageProjectUrl>https://github.com/danielklecha/PipelineBlocks</PackageProjectUrl>
     <Authors>Daniel Klecha</Authors>
     <Description>A .NET Standard library that can be used to create two-directional pipeline blocks.</Description>
@@ -26,6 +28,10 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
+	<None Include="..\icon.png">
+		<Pack>True</Pack>
+		<PackagePath></PackagePath>
+	</None>
     <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
