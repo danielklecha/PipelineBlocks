@@ -33,18 +33,25 @@ public class PipelineBlock<T> : IPipelineBlock<T>
             IsCompleted = true;
             return BlockResult.Error("No job");
         }
-        BlockResult<T>? result = await Job.Invoke(this, cancellationToken);
-        return result is null
-            ? BlockResult.Error("Job returned null")
-            : result.ResultType switch
-            {
-                BlockResultType.Exit or BlockResultType.Completed => Exit(result),
-                BlockResultType.Forward => Forward(result),
-                BlockResultType.BackToCheckpoint => BackToCheckpoint(result),
-                BlockResultType.BackToExit => BackToExit(result),
-                BlockResultType.Skip => Skip(),
-                _ => result
-            };
+        try
+        {
+            BlockResult<T>? result = await Job.Invoke(this, cancellationToken);
+            return result is null
+                ? BlockResult.Error("Job returned null")
+                : result.ResultType switch
+                {
+                    BlockResultType.Exit or BlockResultType.Completed => Exit(result),
+                    BlockResultType.Forward => Forward(result),
+                    BlockResultType.BackToCheckpoint => BackToCheckpoint(result),
+                    BlockResultType.BackToExit => BackToExit(result),
+                    BlockResultType.Skip => Skip(),
+                    _ => result
+                };
+        }
+        catch (Exception ex)
+        {
+            return BlockResult.Error("Job execution failed", ex);
+        }
     }
 
     public async Task<BlockResult> ExecuteAsync(CancellationToken cancellationToken = default)

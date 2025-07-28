@@ -176,6 +176,21 @@ public class PipelineBlockTests
     }
 
     [TestMethod()]
+    public async Task ExecuteAsync_Exception_ShouldReturnError()
+    {
+        // arrange
+        var exception = new Exception("Job execution failed");
+        PipelineBlock<int> block = new()
+        {
+            Job = (x, _) => throw exception
+        };
+        // act
+        Func<Task<BlockResult>> act = () => block.ExecuteAsync();
+        // assert
+        (await act.Should().NotThrowAsync()).Which.Should().BeEquivalentTo(BlockResult.Error("Job execution failed", exception));
+    }
+
+    [TestMethod()]
     public void IsCompleted_NotExecuted_ShouldReturnFalse()
     {
         // arrange
